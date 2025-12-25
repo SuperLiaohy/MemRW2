@@ -43,6 +43,7 @@ public:
 
     QPointF at(std::size_t index) const;
     void write(const QPointF& point);
+    void writeBuffer(const QVector<QPointF>& points);
     void paint(QPainter *painter) override;
 private:
     void readyForPath();
@@ -51,6 +52,7 @@ private:
     QString lineName;
     qreal lineWidth;
     std::size_t bufferCapacity;
+
     QVector<QPointF> buffer;
     std::size_t writeHandle;
     std::size_t dataLen;

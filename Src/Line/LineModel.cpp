@@ -29,6 +29,8 @@ QVariant LineModel::data(const QModelIndex &index, int role) const {
             return static_cast<qint64>(line->getLen());
         case BufCapRole:
             return static_cast<qint64>(line->getCapacity());
+        case ObjectRole:
+            return QVariant::fromValue(line.get());
         default:
             return QVariant();
     }
@@ -41,6 +43,7 @@ QHash<int, QByteArray> LineModel::roleNames() const {
     roles[VisibleRole] = "visible";
     roles[DataLenRole] = "len";
     roles[BufCapRole] = "cap";
+    roles[ObjectRole] = "object";
     return roles;
 }
 
@@ -62,6 +65,7 @@ bool LineModel::setData(const QModelIndex &index, const QVariant &value, int rol
     if (!index.isValid()||index.row()>=lines.size()) return false;
     auto line = lines[index.row()];
     bool changed = false;
+    bool update = false;
     switch (role) {
         case NameRole:
         if (line->getLineName()!=value.toString()) {
@@ -73,6 +77,7 @@ bool LineModel::setData(const QModelIndex &index, const QVariant &value, int rol
             if (line->getLineColor()!=value.toString()) {
                 line->setColor(value.toString());
                 changed = true;
+                update = true;
             }
                 break;
         case VisibleRole:
@@ -94,6 +99,8 @@ bool LineModel::setData(const QModelIndex &index, const QVariant &value, int rol
     }
     if (changed)
         emit dataChanged(index,index,{role});
+    if (update)
+        line->update();
     return changed;
 }
 

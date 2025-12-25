@@ -36,6 +36,10 @@ void ChartLine::write(const QPointF &point) {
     if (bufferCapacity > dataLen) ++dataLen;
 }
 
+void ChartLine::writeBuffer(const QVector<QPointF> &points) {
+    for (const auto & point: points) {write(point);}
+}
+
 void ChartLine::paint(QPainter *painter) {
     readyForPath();
     if (pathPoint.size() < 2) {

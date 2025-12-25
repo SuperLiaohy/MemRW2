@@ -19,6 +19,7 @@ public:
         VisibleRole,
         DataLenRole,
         BufCapRole,
+        ObjectRole,
     };
 
     explicit LineModel(QObject *parent = nullptr);
@@ -36,6 +37,8 @@ public:
     Q_INVOKABLE void append(const QString& name,const QColor& color);
     Q_INVOKABLE void remove(int index);
     Q_INVOKABLE void clear();
+
+    std::shared_ptr<ChartLine> operator[](std::size_t index) {return lines[index];}
 private:
     QVector<std::shared_ptr<ChartLine>> lines;
 

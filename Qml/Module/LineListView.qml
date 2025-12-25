@@ -19,9 +19,7 @@ FluFrame {
                 font.bold: true
                 font.pixelSize: 14
             }
-            Item {
-                Layout.fillWidth: true
-            }
+            Item {Layout.fillWidth: true}
             FluText {
                 text: count + qsTr(" 条")
                 font.pixelSize: 11
@@ -55,13 +53,11 @@ FluFrame {
                 radius: 4
                 border.color: FluTheme.dark ? "#444" : "#ddd"
                 border.width: 1
-
                 MouseArea {
                     id: mouseArea
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-
                     onClicked: {
                         dialogLoader.active = true;
                         dialogLoader.item.open(model)
@@ -104,6 +100,7 @@ FluFrame {
                     FluCheckBox {
                         checked: model.visible
                         onCheckedChanged: {
+                            model.visible = checked
                             // ChartLineManager.setLineVisible(modelData, checked)
                             // updatePath()
                         }
