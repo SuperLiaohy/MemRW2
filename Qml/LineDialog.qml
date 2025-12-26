@@ -22,6 +22,8 @@ FluWindow {
     // ⭐ 默认不显示
     visible: false
 
+    property int mode:0
+    property var lineModel: null
     property bool running: false
     // ⭐ 临时编辑属性
     property var modelObject: null
@@ -36,20 +38,32 @@ FluWindow {
         "#32CD32", "#FF69B4", "#00CED1", "#FFD700"
     ]
 
-    function open(model) {
+    function open(modelObj) {
         // 加载当前属性
-        editName = model.name
-        editColor = model.color
-        editBufferSize = model.cap
-        modelObject = model
+        editName = modelObj.name
+        editColor = modelObj.color
+        editBufferSize = modelObj.cap
+        modelObject = modelObj
         console.log("Opening dialog for line:", "name:", editName, "color:", editColor)
+        mode = 0
         visible = true
+    }
+    function openWithVari(model,name) {
+        // 加载当前属性
+        editName = name
+        editColor = "red"
+        editBufferSize = 5000
+        console.log("Opening dialog for vari:", "name:", editName)
+        mode = 1
+        visible = true
+        lineModel = model;
     }
 
     // ⭐ 关闭时重置
     onClosing: {
         visible = false
         console.log("Dialog closing")
+        lineModel = null
     }
 
     ColumnLayout {
@@ -300,11 +314,14 @@ FluWindow {
                     console.log("  name:", dialog.editName)
                     console.log("  color:", dialog.editColor)
                     console.log("  buffer:", dialog.editBufferSize)
-
-                    modelObject.name = dialog.editName
-                    modelObject.color = dialog.editColor
-                    modelObject.cap = dialog.editBufferSize
-
+                    if (mode===0) {
+                        modelObject.name = dialog.editName
+                        modelObject.color = dialog.editColor
+                        modelObject.cap = dialog.editBufferSize
+                    } else if (mode===1) {
+                        lineModel.appendLine(dialog.editName, dialog.editColor, dialog.editBufferSize);
+                        showSuccess("Add Succeed "+dialog.editName)
+                    }
                     // // ⭐ 只在暂停时才允许修改缓冲区
                     // if (!dialog.running) {
                     //     var oldSize = ChartLineManager.getLineBufferSize(dialog.lineId)

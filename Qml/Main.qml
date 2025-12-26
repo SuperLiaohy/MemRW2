@@ -95,7 +95,14 @@ FluWindow {
         size: parent.height*0.614
         maxSize: parent.height
     }
-
+    Loader {
+        id: dialogLoader
+        active: false
+        sourceComponent: LineDialog {
+            running: false
+            visible: false
+        }
+    }
 
     Component{
         id: com_reveal

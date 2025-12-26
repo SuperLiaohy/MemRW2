@@ -14,12 +14,12 @@
 
 class ChartLine : public QQuickPaintedItem {
 public:
-    explicit ChartLine(const QString& name, const QColor& color)
+    explicit ChartLine(const QString& name, const QColor& color, std::size_t capacity = 5000)
         : lineId(QUuid::createUuid().toString())
         , lineColor(color)
         , lineName(name)
         , lineWidth(1.5)
-        , bufferCapacity(5000)
+        , bufferCapacity(capacity)
         , writeHandle(0)
         , dataLen(0)
     {

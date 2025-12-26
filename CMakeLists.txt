@@ -10,7 +10,7 @@ qt_standard_project_setup(REQUIRES 6.8)
 add_subdirectory(DwarfCpp)
 add_executable(MemRW main.cpp)
 
-target_include_directories(MemRW PUBLIC Src/UIComponent)
+target_include_directories(MemRW PUBLIC Src/UIComponent Src/Line)
 qt_add_qml_module(MemRW
         URI MemRWApp
         QML_FILES
@@ -28,6 +28,7 @@ qt_add_qml_module(MemRW
         Src/Variable/TreeModel.cpp Src/Variable/TreeModel.hpp
         Src/Variable/GetVariTree.cpp Src/Variable/GetVariTree.hpp
         Src/Line/LineModel.cpp Src/Line/LineModel.hpp
+        Src/Line/LineGroupModel.cpp Src/Line/LineGroupModel.hpp
         Src/Line/ChartLine.cpp Src/Line/ChartLine.hpp
         Src/UIComponent/CircularReveal.cpp Src/UIComponent/CircularReveal.h Src/UIComponent/stdafx.h
 

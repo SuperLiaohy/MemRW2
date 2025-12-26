@@ -7,6 +7,7 @@ import FluentUI
 FluSheet {
     id: sheet
 
+    property var lineModel: null
     background: FluRectangle {
         radius: [30,30,0,0]
         FluShadow{
@@ -122,9 +123,8 @@ FluSheet {
         anchors.left: parent.left
         anchors.right: parent.right
         model: myTreeModel
-
-        selectionModel: ItemSelectionModel {
-        }
+        clip: true
+        selectionModel: ItemSelectionModel {}
 
         delegate: Item {
             // implicitWidth: Math.max(
@@ -237,7 +237,9 @@ FluSheet {
                 sourceComponent: FluIconButton {
                     iconSource: FluentIcons.Add
                     onClicked: {
-                        showSuccess("Add Succeed "+model.display)
+                        dialogLoader.active = true;
+                        dialogLoader.item.openWithVari(lineModel,model.display);
+                        // lineModel.appendLine(model.display,"red")
                     }
                 }
             }
@@ -256,6 +258,11 @@ FluSheet {
             fileText.text = selectedFile;
             myTreeModel.setTreeData(selectedFile);
         }
+    }
+
+    function openWithModel(model) {
+        sheet.lineModel = model
+        open(FluSheetType.Bottom)
     }
 }
 

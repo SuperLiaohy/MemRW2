@@ -2,11 +2,12 @@
 // Created by liaohy on 12/25/25.
 //
 
-// You may need to build the project (run Qt uic code generator) to get "ui_LineDataModel.h" resolved
 
 #include "LineModel.hpp"
 
-LineModel::LineModel(QObject *parent) : QAbstractItemModel(parent), lines() {
+#include "LineGroupModel.hpp"
+
+LineModel::LineModel(QObject *parent) : QAbstractItemModel(parent) {
 }
 
 LineModel::~LineModel() = default;
@@ -110,22 +111,42 @@ Qt::ItemFlags LineModel::flags(const QModelIndex &index) const {
     return QAbstractItemModel::flags(index) | Qt::ItemIsEditable;
 }
 
-void LineModel::append(const QString &name, const QColor& color) {
-    auto t = std::make_shared<ChartLine>(name, color);
+void LineModel::appendLine(const QString &name, const QColor& color, std::size_t bufferCapacity) {
+    auto t = std::make_shared<ChartLine>(name, color, bufferCapacity);
     int row = lines.size();
     beginInsertRows(QModelIndex(),row,row);
     lines.emplace_back(t);
-    endInsertColumns();
+    endInsertRows();
+    emit LineGroupModel::instance().lineCountChanged();
+    emit lineCountChanged();
 }
 
-void LineModel::remove(int index) {
+void LineModel::removeLine(int index) {
     beginRemoveRows(QModelIndex(),index,index);
     lines.remove(index);
     endRemoveRows();
+    emit LineGroupModel::instance().lineCountChanged();
+    emit lineCountChanged();
 }
 
 void LineModel::clear() {
+    auto before = lines.size();
     beginResetModel();
     lines.clear();
     endResetModel();
+    if (before!=lines.size()) {
+        emit LineGroupModel::instance().lineCountChanged();
+        emit lineCountChanged();
+    }
+}
+
+bool LineModel::isAllVisible() {
+    for (const auto & line: lines) if (!line->isVisible()) return false;
+    return true;
+}
+
+void LineModel::setAllVisible(bool visible) {
+    for (const auto & line: lines) {
+        line->setVisible(visible);
+    }
 }
