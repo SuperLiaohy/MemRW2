@@ -10,7 +10,7 @@ qt_standard_project_setup(REQUIRES 6.8)
 add_subdirectory(DwarfCpp)
 add_executable(MemRW main.cpp)
 
-target_include_directories(MemRW PUBLIC Src/UIComponent Src/Line)
+target_include_directories(MemRW PUBLIC Src/UIComponent Src/Line Src/ExChartView)
 qt_add_qml_module(MemRW
         URI MemRWApp
         QML_FILES
@@ -31,6 +31,8 @@ qt_add_qml_module(MemRW
         Src/Line/LineGroupModel.cpp Src/Line/LineGroupModel.hpp
         Src/Line/ChartLine.cpp Src/Line/ChartLine.hpp
         Src/UIComponent/CircularReveal.cpp Src/UIComponent/CircularReveal.h Src/UIComponent/stdafx.h
+        Src/ExChartView/ExChartView.cpp Src/ExChartView/ExChartView.hpp
+        Src/ExChartView/LineAttrModel.cpp Src/ExChartView/LineAttrModel.hpp
 
 )
 
