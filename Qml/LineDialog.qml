@@ -22,8 +22,13 @@ FluWindow {
     // ⭐ 默认不显示
     visible: false
 
-    property int mode:0
-    property var lineModel: null
+    enum OpenMode {
+        Change,
+        Add
+    }
+
+    property int mode: LineDialog.OpenMode.Change
+    property var lineAttrModel: null
     property bool running: false
     // ⭐ 临时编辑属性
     property var modelObject: null
@@ -37,33 +42,33 @@ FluWindow {
         "#909399", "#C71585", "#FF4500", "#1E90FF",
         "#32CD32", "#FF69B4", "#00CED1", "#FFD700"
     ]
-
-    function open(modelObj) {
+    function open(model,object, openMode) {
         // 加载当前属性
-        editName = modelObj.name
-        editColor = modelObj.color
-        editBufferSize = modelObj.cap
-        modelObject = modelObj
-        console.log("Opening dialog for line:", "name:", editName, "color:", editColor)
-        mode = 0
-        visible = true
-    }
-    function openWithVari(model,name) {
-        // 加载当前属性
-        editName = name
-        editColor = "red"
-        editBufferSize = 5000
-        console.log("Opening dialog for vari:", "name:", editName)
-        mode = 1
-        visible = true
-        lineModel = model;
+        if (openMode===LineDialog.OpenMode.Add) {
+            editName = object
+            editColor = "red"
+            editBufferSize = 5000
+            console.log("Opening dialog for vari:", "name:", editName, "OpenMode: Add")
+            mode = openMode
+            visible = true
+            lineAttrModel = model;
+        } else if (openMode===LineDialog.OpenMode.Change) {
+            editName = object.name
+            editColor = object.color
+            editBufferSize = object.capacity
+            modelObject = object
+            console.log("Opening dialog for line:", "name:", editName, "color:", editColor, "OpenMode: Change")
+            mode = openMode
+            visible = true
+            lineAttrModel = model;
+        }
     }
 
     // ⭐ 关闭时重置
     onClosing: {
         visible = false
         console.log("Dialog closing")
-        lineModel = null
+        lineAttrModel = null
     }
 
     ColumnLayout {
@@ -314,25 +319,14 @@ FluWindow {
                     console.log("  name:", dialog.editName)
                     console.log("  color:", dialog.editColor)
                     console.log("  buffer:", dialog.editBufferSize)
-                    if (mode===0) {
+                    if (dialog.mode===LineDialog.OpenMode.Change) {
                         modelObject.name = dialog.editName
                         modelObject.color = dialog.editColor
-                        modelObject.cap = dialog.editBufferSize
-                    } else if (mode===1) {
-                        lineModel.appendLine(dialog.editName, dialog.editColor, dialog.editBufferSize);
+                        modelObject.capacity = dialog.editBufferSize
+                    } else if (dialog.mode===LineDialog.OpenMode.Add) {
+                        dialog.lineAttrModel.appendLine(dialog.editName, dialog.editColor, dialog.editBufferSize);
                         showSuccess("Add Succeed "+dialog.editName)
                     }
-                    // // ⭐ 只在暂停时才允许修改缓冲区
-                    // if (!dialog.running) {
-                    //     var oldSize = ChartLineManager.getLineBufferSize(dialog.lineId)
-                    //     if (oldSize !== dialog.editBufferSize) {
-                    //         console.log("  Changing buffer size from", oldSize, "to", dialog.editBufferSize)
-                    //         ChartLineManager. setLineBufferSize(dialog. lineId, dialog.editBufferSize)
-                    //     }
-                    // } else {
-                    //     console.log("  ⚠️ Cannot change buffer size while running")
-                    // }
-
                     console.log("=== Properties saved ===")
                     dialog.visible = false;
                 }

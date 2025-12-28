@@ -42,6 +42,7 @@ FluWindow {
             LineListView {
                 Layout.preferredWidth: 220
                 Layout.fillHeight: true
+                lineAttrModel: chart.lineAttrModel
             }
             // ==================== 图表区域 ====================
             GridLayout {
@@ -51,28 +52,28 @@ FluWindow {
                 Layout.fillHeight: true
                 // ==================== Y轴选择器 ====================
                 ValueAxisControlBar {
+                    id: yBar
                     Layout.row: 0
                     Layout.column: 0
                     Layout.preferredWidth: 50
                     Layout.fillHeight: true
-                    id: yBar
                 }
                 // ==================== 图表主体 ====================
-                BasicChart {
+                ExChartView {
+                    id: chart
                     Layout.row: 0
                     Layout.column: 1
                     Layout. fillWidth: true
                     Layout.fillHeight: true
-                    id: chart
                 }
                 // ⭐ ==================== X轴时间范围选择器 ====================
                 TimeAxisControlBar {
+                    id: xBar
                     Layout.row: 1
                     Layout.column: 0
                     Layout.columnSpan:2
                     Layout.fillWidth: true
                     Layout.preferredHeight: 60
-                    id: xBar
                 }
             }
         }
@@ -102,8 +103,15 @@ FluWindow {
             running: false
             visible: false
         }
+        function open() {
+
+        }
+        function close() {
+
+        }
     }
 
+    // ==================== 动画 ====================
     Component{
         id: com_reveal
         CircularReveal{

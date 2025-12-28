@@ -6,6 +6,7 @@
 
 #include <QAbstractListModel>
 #include <QColor>
+#include <qqmlintegration.h>
 
 class ExChartView;
 
@@ -53,7 +54,6 @@ struct LineAttr {
 
 class LineAttrModel : public QAbstractListModel {
     Q_OBJECT
-
 public:
     Q_DISABLE_COPY_MOVE(LineAttrModel)
 
@@ -69,7 +69,8 @@ public:
         VariType,
         VariAddr,
     };
-
+    explicit LineAttrModel(QObject *parent = nullptr) : QAbstractListModel(parent) {}
+    LineAttrModel()=default;
     ~LineAttrModel()=default;
 
     int rowCount(const QModelIndex &parent) const override;
@@ -78,6 +79,9 @@ public:
 
     bool setData(const QModelIndex &index, const QVariant &value, int role) override;
     Qt::ItemFlags flags(const QModelIndex &index) const override;
+
+    Q_INVOKABLE void appendLine(const QString& name, const QColor& color, quint32 bufferCapacity);
+    Q_INVOKABLE void removeLine(int index);
     friend ExChartView;
 private:
     QVector<std::shared_ptr<LineAttr>> lineAttrs;

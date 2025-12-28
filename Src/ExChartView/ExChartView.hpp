@@ -26,9 +26,14 @@ public:
 class ExChartView : public QQuickItem {
     Q_OBJECT
     QML_ELEMENT
+    Q_PROPERTY(LineAttrModel* lineAttrModel READ getLineAttrModel NOTIFY lineAttrModelChanged)
+
 public:
     explicit ExChartView(QQuickItem* parent = nullptr);
     QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *) override;
+    LineAttrModel* getLineAttrModel() {return lineAttrModel;}
+signals:
+    void lineAttrModelChanged();
 private:
     qreal viewXMax;
     qreal viewXMin;

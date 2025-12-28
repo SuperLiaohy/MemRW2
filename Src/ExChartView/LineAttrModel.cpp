@@ -130,3 +130,17 @@ Qt::ItemFlags LineAttrModel::flags(const QModelIndex &index) const {
         return Qt::NoItemFlags;
     return QAbstractListModel::flags(index) | Qt::ItemIsEditable;
 }
+
+void LineAttrModel::appendLine(const QString &name, const QColor &color, quint32 bufferCapacity) {
+    auto t = std::make_shared<LineAttr>(LineAttr{.group = "null", .config = {.color = color, .name = name, .visible = true, .capacity = bufferCapacity, .user = {}}, .view = {}});
+    int row = lineAttrs.size();
+    beginInsertRows(QModelIndex(),row,row);
+    lineAttrs.emplace_back(t);
+    endInsertRows();
+}
+
+void LineAttrModel::removeLine(int index) {
+    beginRemoveRows(QModelIndex(),index,index);
+    lineAttrs.remove(index);
+    endRemoveRows();
+}

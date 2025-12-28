@@ -22,6 +22,23 @@ QPointF ExLine::at(quint32 index) const {
 }
 
 ExChartView::ExChartView(QQuickItem *parent) : QQuickItem(parent) {
+    lineAttrModel = new LineAttrModel(this);
+    connect(lineAttrModel, &LineAttrModel::dataChanged,this,[this](const QModelIndex &topLeft, const QModelIndex &bottomRight,const QList<int> &roles) {
+        qDebug()<<"data changed" << topLeft<<bottomRight<<roles;
+    });
+    connect(lineAttrModel, &LineAttrModel::rowsInserted,this,[this](const QModelIndex &parent, int first, int last) {
+        for (int i = 0; i < last-first+1; ++i) {
+            lines.append(ExLine{lineAttrModel->lineAttrs[first+i]->config.capacity});
+            bufA.append(PointBuf{});
+            bufB.append(PointBuf{});
+        }
+    });
+    connect(lineAttrModel, &LineAttrModel::rowsRemoved,this,[this](const QModelIndex &parent, int first, int last) {
+        lines.remove(first,last-first+1);
+        bufA.remove(first,last-first+1);
+        bufB.remove(first,last-first+1);
+    });
+    connect(lineAttrModel, &LineAttrModel::modelReset,this,[](){});
 }
 
 QSGNode * ExChartView::updatePaintNode(QSGNode *qsg_node, UpdatePaintNodeData *update_paint_node_data) {
