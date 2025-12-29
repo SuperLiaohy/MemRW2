@@ -59,7 +59,7 @@ FluWindow {
                     Layout.fillHeight: true
                 }
                 // ==================== 图表主体 ====================
-                ExChartView {
+                ExChart {
                     id: chart
                     Layout.row: 0
                     Layout.column: 1
@@ -101,13 +101,20 @@ FluWindow {
         active: false
         sourceComponent: LineDialog {
             running: false
-            visible: false
+            visible: true
+            onClosing: {
+                visible = false
+                console.log("Dialog closing")
+                lineAttrModel = null
+                dialogLoader.close()
+            }
         }
-        function open() {
-
+        function open(model,object, openMode) {
+            active = true;
+            dialogLoader.item.open(model,object, openMode)
         }
         function close() {
-
+            active = false;
         }
     }
 

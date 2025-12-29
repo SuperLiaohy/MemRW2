@@ -5,6 +5,7 @@
 #include <QSGGeometryNode>
 #include <QSGFlatColorMaterial>
 #include "ExChartView.hpp"
+#include "Backend.hpp"
 
 void ExLine::write(const QPointF &point) {
     buf[writeHandle] = point;
@@ -34,9 +35,11 @@ ExChartView::ExChartView(QQuickItem *parent) : QQuickItem(parent) {
         }
     });
     connect(lineAttrModel, &LineAttrModel::rowsRemoved,this,[this](const QModelIndex &parent, int first, int last) {
-        lines.remove(first,last-first+1);
-        bufA.remove(first,last-first+1);
-        bufB.remove(first,last-first+1);
+        Backend::instance().sync.sendRequest([this,first,last]() {
+            lines.remove(first,last-first+1);
+            bufA.remove(first,last-first+1);
+            bufB.remove(first,last-first+1);
+        });
     });
     connect(lineAttrModel, &LineAttrModel::modelReset,this,[](){});
 }

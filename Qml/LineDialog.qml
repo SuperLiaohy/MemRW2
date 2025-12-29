@@ -19,9 +19,6 @@ FluWindow {
     minimumWidth: 400
     minimumHeight: 500
 
-    // ⭐ 默认不显示
-    visible: false
-
     enum OpenMode {
         Change,
         Add
@@ -62,13 +59,6 @@ FluWindow {
             visible = true
             lineAttrModel = model;
         }
-    }
-
-    // ⭐ 关闭时重置
-    onClosing: {
-        visible = false
-        console.log("Dialog closing")
-        lineAttrModel = null
     }
 
     ColumnLayout {

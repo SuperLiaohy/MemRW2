@@ -79,8 +79,7 @@ FluFrame {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        dialogLoader.active = true;
-                        dialogLoader.item.open(frame.lineAttrModel,model,LineDialog.OpenMode.Change)
+                        dialogLoader.open(frame.lineAttrModel,model,LineDialog.OpenMode.Change)
                     }
                 }
                 RowLayout {
@@ -139,7 +138,7 @@ FluFrame {
                             anchors.fill: parent
                             onClicked: function (event) {
                                 event.accepted = true
-                                // lineAttrModel.remove(index);
+                                frame.lineAttrModel.removeLine(index);
                             }
                         }
                     }

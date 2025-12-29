@@ -237,8 +237,7 @@ FluSheet {
                 sourceComponent: FluIconButton {
                     iconSource: FluentIcons.Add
                     onClicked: {
-                        dialogLoader.active = true;
-                        dialogLoader.item.open(sheet.lineAttrModel,model.display,LineDialog.OpenMode.Add)
+                        dialogLoader.open(sheet.lineAttrModel,model.display,LineDialog.OpenMode.Add)
                         // lineModel.appendLine(model.display,"red")
                     }
                 }
