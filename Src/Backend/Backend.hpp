@@ -6,6 +6,8 @@
 #include <qqmlengine.h>
 #include <thread>
 
+class ExChartView;
+
 class Sync {
 public:
     Sync() = default;
@@ -24,6 +26,7 @@ class Backend : public QObject {
     Q_OBJECT
     QML_ELEMENT
     QML_SINGLETON
+    Q_PROPERTY(bool running READ getRunning WRITE setRunning NOTIFY runningChanged)
     Backend() = default;
 public:
     static Backend& instance() {static Backend backend;return backend;}
@@ -35,10 +38,15 @@ public:
         return result;
     }
     void init();
-    void start() {running.store(true);}
-    void stop() {running.store(false);}
+    bool getRunning() {return  running;}
+    void setRunning(bool run) {running.store(run);emit runningChanged();}
+    void setChartView(ExChartView* chart) {chartView=chart;}
     Sync sync{};
+signals:
+    void runningChanged();
 private:
+    qreal runTime;
+    ExChartView* chartView;
     std::atomic<bool> running{false};
     std::jthread samplingWorker;
 };

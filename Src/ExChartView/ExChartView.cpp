@@ -23,7 +23,10 @@ QPointF ExLine::at(quint32 index) const {
 }
 
 ExChartView::ExChartView(QQuickItem *parent) : QQuickItem(parent) {
+    setFlag(QQuickItem::ItemHasContents, true);
     lineAttrModel = new LineAttrModel(this);
+    backBuf.store(&bufA);
+    Backend::instance().setChartView(this);
     connect(lineAttrModel, &LineAttrModel::dataChanged,this,[this](const QModelIndex &topLeft, const QModelIndex &bottomRight,const QList<int> &roles) {
         qDebug()<<"data changed" << topLeft<<bottomRight<<roles;
     });
@@ -39,12 +42,14 @@ ExChartView::ExChartView(QQuickItem *parent) : QQuickItem(parent) {
             lines.remove(first,last-first+1);
             bufA.remove(first,last-first+1);
             bufB.remove(first,last-first+1);
+            update();
         });
     });
     connect(lineAttrModel, &LineAttrModel::modelReset,this,[](){});
 }
 
 QSGNode * ExChartView::updatePaintNode(QSGNode *qsg_node, UpdatePaintNodeData *update_paint_node_data) {
+    qDebug()<<"paint";
     QSGNode* root = qsg_node?qsg_node:new QSGNode;
     QSGGeometryNode* node = nullptr;    QSGGeometry *geom = nullptr;
     for (int i = 0; i < lines.size(); ++i) {
@@ -79,5 +84,15 @@ QSGNode * ExChartView::updatePaintNode(QSGNode *qsg_node, UpdatePaintNodeData *u
         node->markDirty(QSGNode::DirtyGeometry);
     }
     return root;
+}
+
+void ExChartView::switchBuf() {
+    QVector<PointBuf>& ready = *backBuf.load();
+    auto tmp = backBuf==&bufA?&bufB:&bufA;
+    backBuf.store(tmp);
+    for (int i = 0; i < lines.size(); ++i) {
+        lines[i].writeBuffer(ready[i]);
+        ready[i].clear();
+    }
 }
 

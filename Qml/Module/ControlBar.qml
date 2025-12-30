@@ -13,15 +13,15 @@ FluFrame {
         anchors.fill: parent
         spacing: 10
         FluFilledButton {
-            text: frame.running ? qsTr("暂停") : qsTr("开始")
+            text: Backend.running ? qsTr("暂停") : qsTr("开始")
             Layout.preferredWidth: 65
             onClicked: {
-                if (frame.running) {
+                if (Backend.running) {
                     console.log("=== Paused ===")
                 } else {
                     console.log("=== Starting ===")
                 }
-                frame.running=!frame.running
+                Backend.running=!Backend.running
             }
         }
         FluButton {
