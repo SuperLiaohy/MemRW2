@@ -45,36 +45,10 @@ FluWindow {
                 lineAttrModel: chart.lineAttrModel
             }
             // ==================== 图表区域 ====================
-            GridLayout {
-                columns:2
-                rows:2
-                Layout.fillWidth: true
+            ExChart {
+                id: chart
+                Layout. fillWidth: true
                 Layout.fillHeight: true
-                // ==================== Y轴选择器 ====================
-                ValueAxisControlBar {
-                    id: yBar
-                    Layout.row: 0
-                    Layout.column: 0
-                    Layout.preferredWidth: 50
-                    Layout.fillHeight: true
-                }
-                // ==================== 图表主体 ====================
-                ExChart {
-                    id: chart
-                    Layout.row: 0
-                    Layout.column: 1
-                    Layout. fillWidth: true
-                    Layout.fillHeight: true
-                }
-                // ⭐ ==================== X轴时间范围选择器 ====================
-                TimeAxisControlBar {
-                    id: xBar
-                    Layout.row: 1
-                    Layout.column: 0
-                    Layout.columnSpan:2
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 60
-                }
             }
         }
         // ==================== 控制栏 ====================
