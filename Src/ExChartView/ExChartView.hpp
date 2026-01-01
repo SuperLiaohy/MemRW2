@@ -17,6 +17,7 @@ class ExLine {
     quint32 capacity;
 public:
     ExLine(quint32 cap):writeHandle(0),len(0),capacity(cap){buf.resize(cap);}
+    bool deleteLater = false;
     quint32 getLen() {return len;}
     void write(const QPointF& point);
     void writeBuffer(const QVector<QPointF>& points);
@@ -55,6 +56,9 @@ public:
     void setViewYMax(qreal value){viewYMax = value; emit viewYMaxChanged();}
     void setViewXRange(qreal range){ viewXRange = range; emit viewXRangeChanged();}
     void setViewYRange(qreal range){ viewYRange = range; emit viewYRangeChanged();}
+
+    void onAttrChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight,const QList<int> &roles);
+    void onAttrRemoved(int index);
 signals:
     void lineAttrModelChanged();
     void viewXMaxChanged();

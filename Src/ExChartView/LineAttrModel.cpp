@@ -72,7 +72,7 @@ bool LineAttrModel::setData(const QModelIndex &index, const QVariant &value, int
             break;
         case VisibleRole:
             if (attr->config.visible!=value.toBool()) {
-                attr->config.color= value.toBool();
+                attr->config.visible= value.toBool();
                 changed = true;
             }
             break;

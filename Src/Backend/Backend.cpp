@@ -29,8 +29,9 @@ void Backend::init() {
 
             auto nowSysTime = std::chrono::high_resolution_clock::now();
             runTime = std::chrono::duration_cast<std::chrono::microseconds>((nowSysTime-startSysTime)).count()/1000.0;
-            auto point = QPointF(runTime,0.5*chartView->getViewYRange()+0.3*chartView->getViewYRange()*std::sin(runTime/300*2*std::numbers::pi));
+            int index = 0;
             for (auto & buf: *chartView->backBuf) {
+                auto point = QPointF(runTime,(++index*10)+0.5*chartView->getViewYRange()+0.3*chartView->getViewYRange()*std::sin(runTime/300*2*std::numbers::pi));
                 buf.append(point);
             }
 

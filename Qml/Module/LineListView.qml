@@ -117,18 +117,12 @@ FluFrame {
                         }
                     }
                     FluCheckBox {
-                        checked: model.visible
+                        checked: true
                         onCheckedChanged: {
+                            // checked = !checked
                             model.visible = checked
                             // ChartLineManager.setLineVisible(modelData, checked)
                             // updatePath()
-                        }
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: function (event) {
-                                event.accepted = true
-                                parent.checked = !parent.checked
-                            }
                         }
                     }
                     FluIconButton {
