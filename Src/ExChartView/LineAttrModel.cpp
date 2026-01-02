@@ -86,6 +86,7 @@ bool LineAttrModel::setData(const QModelIndex &index, const QVariant &value, int
             if (attr->view.pointsLen!=value.toUInt()) {
                 attr->view.pointsLen = value.toUInt();
                 changed = true;
+                qDebug()<<"attr.view.pointsLen: "<<attr->view.pointsLen;
             }
             break;
         case PaintLenRole:

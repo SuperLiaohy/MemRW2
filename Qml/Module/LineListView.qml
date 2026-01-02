@@ -106,7 +106,7 @@ FluFrame {
                             color: FluTheme.dark ? "#888" : "#666"
                         }
                         FluText {
-                            text: qsTr("绘制:  ") + model.paintLen + qsTr(" 点")
+                            text: qsTr("绘制:  ") + model.len + qsTr(" 点")
                             font.pixelSize: 10
                             font.bold: true
                             color: {

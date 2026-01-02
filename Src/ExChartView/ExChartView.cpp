@@ -28,6 +28,7 @@ ExChartView::ExChartView(QQuickItem *parent) : QQuickItem(parent) {
     lineAttrModel = new LineAttrModel(this);
     backBuf.store(&bufA);
     Backend::instance().setChartView(this);
+    connect(&Backend::instance(),&Backend::updatePath,this,&ExChartView::updatePath);
     connect(lineAttrModel, &LineAttrModel::dataChanged,this,[this](const QModelIndex &topLeft, const QModelIndex &bottomRight,const QList<int> &roles) {
         qDebug()<<"data changed" << topLeft<<bottomRight<<roles;
         onAttrChanged(topLeft,bottomRight,roles);
@@ -40,18 +41,14 @@ ExChartView::ExChartView(QQuickItem *parent) : QQuickItem(parent) {
         }
     });
     connect(lineAttrModel, &LineAttrModel::rowsRemoved,this,[this](const QModelIndex &parent, int first, int last) {
-        for (int i = first; i <=last; ++i) {
-            lines[i].deleteLater = true;
-        }
+        for (int i = first; i <=last; ++i) {lines[i].deleteLater = true;}
         update();
-        // Backend::instance().sync.sendRequest([this,first,last]() {
-        //     lines.remove(first,last-first+1);
-        //     bufA.remove(first,last-first+1);
-        //     bufB.remove(first,last-first+1);
-        //     update();
-        // });
     });
     connect(lineAttrModel, &LineAttrModel::modelReset,this,[](){});
+}
+
+ExChartView::~ExChartView() {
+    Backend::instance().sync.sendRequest([](){Backend::instance().setRunning(false);});
 }
 
 QSGNode * ExChartView::updatePaintNode(QSGNode *qsg_node, UpdatePaintNodeData *update_paint_node_data) {
@@ -128,13 +125,25 @@ QSGNode * ExChartView::updatePaintNode(QSGNode *qsg_node, UpdatePaintNodeData *u
 }
 
 void ExChartView::switchBuf() {
-    QVector<PointBuf>& ready = *backBuf.load();
+    QVector<PointBuf>* ready = backBuf.load();
     auto tmp = backBuf==&bufA?&bufB:&bufA;
     backBuf.store(tmp);
+    frontBuf.store(ready);
+}
+
+void ExChartView::updatePath(qreal runTime) {
+    auto& ready = *frontBuf;
     for (int i = 0; i < lines.size(); ++i) {
         lines[i].writeBuffer(ready[i]);
+        // lineAttrModel->lineAttrs[i]->view.pointsLen = lines[i].getLen();
+        lineAttrModel->setData(lineAttrModel->index(i),lines[i].getLen(),LineAttrModel::RoleNames::BufLenRole);
         ready[i].clear();
     }
+    if (runTime>getViewXRange()) {
+        setViewXMax(runTime);
+        setViewXMin(runTime-getViewXRange());
+    }
+    update();
 }
 
 void ExChartView::onAttrChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QList<int> &roles) {

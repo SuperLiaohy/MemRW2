@@ -7,6 +7,7 @@ FluFrame {
     id: frame
     property alias lineAttrModel: chartView.lineAttrModel
     clip:true
+    /* === y axis === */
     Item {
         id: yAxisLabels
         anchors.left: parent.left
@@ -24,18 +25,21 @@ FluFrame {
             id: yRep
             model: 5
             FluText {
-                width: parent.width
                 // height: parent.height / (yRep.count-1)
+                x:Math.max(0,parent.width-width/2)
                 y: index===(yRep.count-1)? parent.height-height:index*parent.height/(yRep.count-1)
                 text: (chartView.viewYMax - (index / 4) * (chartView.viewYMax - chartView.viewYMin)).toFixed(1)
-                font.pixelSize: 10
+                font.pixelSize: yMouseArea.pressed?15:10
+                font.bold: yMouseArea.pressed
                 color: FluTheme.dark ? "#888" : "#666"
-                horizontalAlignment: Text.AlignRight
+                horizontalAlignment: Text.AlignLeft
                 rightPadding: 5
             }
         }
         MouseArea {
+            id: yMouseArea
             anchors.fill: parent
+            cursorShape: pressed?Qt.ClosedHandCursor:Qt.ArrowCursor
             property real dragStartY: 0
             property real dragStartYMin: 0
             property real dragStartYMax: 0
@@ -63,7 +67,7 @@ FluFrame {
             }
         }
     }
-
+    /* === chart === */
     Rectangle {
         id: chartArea
         anchors.left: yAxisLabels.right
@@ -93,7 +97,11 @@ FluFrame {
             id: chartView
             anchors.fill: parent
         }
+        MouseArea {
+            id: chartMouseArea
+        }
     }
+    /* === x axis === */
     Item {
         id: xAxisLabels
         anchors.left: chartArea.left
@@ -114,13 +122,16 @@ FluFrame {
                 height: parent.height
                 x: index===(xRep.count-1)? parent.width-width:index*parent.width/(xRep.count-1)
                 text: (chartView.viewXMin + (index / 4) * (chartView.viewXMax - chartView.viewXMin)).toFixed(1)
-                font.pixelSize: 10
+                font.pixelSize: xMouseArea.pressed?15:10
+                font.bold: xMouseArea.pressed
                 color: FluTheme.dark ? "#888" : "#666"
                 horizontalAlignment: Text.AlignLeft
             }
         }
         MouseArea {
+            id: xMouseArea
             anchors.fill: parent
+            cursorShape: pressed?Qt.ClosedHandCursor:Qt.ArrowCursor
             property real dragStartX: 0
             property real dragStartXMin: 0
             property real dragStartXMax: 0

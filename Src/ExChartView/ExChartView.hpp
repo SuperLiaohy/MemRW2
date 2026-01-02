@@ -38,10 +38,13 @@ class ExChartView : public QQuickItem {
 
 public:
     explicit ExChartView(QQuickItem* parent = nullptr);
+    ~ExChartView();
     QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *) override;
     void switchBuf();
+    void updatePath(qreal runTime);
     LineAttrModel* getLineAttrModel() {return lineAttrModel;}
     std::atomic<QVector<PointBuf>*> backBuf;
+    std::atomic<QVector<PointBuf>*> frontBuf;
 
     qreal getViewXMax(){ return viewXMax;}
     qreal getViewXMin(){ return viewXMin;}

@@ -44,6 +44,7 @@ public:
     Sync sync{};
 signals:
     void runningChanged();
+    void updatePath(qreal runTime);
 private:
     qreal runTime;
     ExChartView* chartView;

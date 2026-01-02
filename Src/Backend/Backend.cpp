@@ -10,7 +10,7 @@ void Backend::init() {
     samplingWorker = std::jthread([this](const std::stop_token& stoken) {
         bool lastRun = running;
         auto startSysTime = std::chrono::high_resolution_clock::now();
-        auto everySysTime = std::chrono::high_resolution_clock::now();
+        auto everyFrameSysTime = std::chrono::high_resolution_clock::now();
         qreal Time = 0;
         while (!stoken.stop_requested()) {
             sync.tryGetRequest([this]() {
@@ -18,7 +18,7 @@ void Backend::init() {
             });
             if (lastRun==false&&running==true) {
                 startSysTime = std::chrono::high_resolution_clock::now();
-                everySysTime = startSysTime;
+                everyFrameSysTime = startSysTime;
                 Time = 0;
             }
             lastRun = running;
@@ -26,7 +26,7 @@ void Backend::init() {
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 continue;
             }
-
+            // start to operate on charts
             auto nowSysTime = std::chrono::high_resolution_clock::now();
             runTime = std::chrono::duration_cast<std::chrono::microseconds>((nowSysTime-startSysTime)).count()/1000.0;
             int index = 0;
@@ -35,17 +35,13 @@ void Backend::init() {
                 buf.append(point);
             }
 
-            Time = std::chrono::duration_cast<std::chrono::microseconds>((nowSysTime-everySysTime)).count()/1000.0;
+            Time = std::chrono::duration_cast<std::chrono::microseconds>((nowSysTime-everyFrameSysTime)).count()/1000.0;
             if (Time>30) {
                 chartView->switchBuf();
-                if (runTime>chartView->getViewXRange()) {
-                    chartView->setViewXMax(runTime);
-                    chartView->setViewXMin(runTime-chartView->getViewXRange());
-                }
-                QMetaObject::invokeMethod(chartView, "update", Qt::QueuedConnection);
+                emit updatePath(runTime);
                 qDebug()<<"update "<<"xMin:"<<chartView->getViewXMin() << "xMax:"<<chartView->getViewXMax()
                 <<"yMin:"<<chartView->getViewYMin()<<"yMax:"<<chartView->getViewYMax();
-                everySysTime = nowSysTime;
+                everyFrameSysTime = nowSysTime;
             }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
