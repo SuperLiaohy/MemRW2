@@ -7,6 +7,15 @@ FluFrame {
     id: frame
     property alias lineAttrModel: chartView.lineAttrModel
     clip:true
+
+    property real dragStartY: 0
+    property real dragStartYMin: 0
+    property real dragStartYMax: 0
+
+    property real dragStartX: 0
+    property real dragStartXMin: 0
+    property real dragStartXMax: 0
+
     /* === y axis === */
     Item {
         id: yAxisLabels
@@ -28,9 +37,9 @@ FluFrame {
                 // height: parent.height / (yRep.count-1)
                 x:Math.max(0,parent.width-width/2)
                 y: index===(yRep.count-1)? parent.height-height:index*parent.height/(yRep.count-1)
-                text: (chartView.viewYMax - (index / 4) * (chartView.viewYMax - chartView.viewYMin)).toFixed(1)
-                font.pixelSize: yMouseArea.pressed?15:10
-                font.bold: yMouseArea.pressed
+                text: (chartView.viewYMax - (index / (yRep.count-1)) * (chartView.viewYMax - chartView.viewYMin)).toFixed(1)
+                font.pixelSize: yMouseArea.pressed||chartMouseArea.pressed?15:10
+                font.bold: yMouseArea.pressed||chartMouseArea.pressed
                 color: FluTheme.dark ? "#888" : "#666"
                 horizontalAlignment: Text.AlignLeft
                 rightPadding: 5
@@ -40,20 +49,17 @@ FluFrame {
             id: yMouseArea
             anchors.fill: parent
             cursorShape: pressed?Qt.ClosedHandCursor:Qt.ArrowCursor
-            property real dragStartY: 0
-            property real dragStartYMin: 0
-            property real dragStartYMax: 0
             onPressed: function(event) {
-                dragStartY = event.y
-                dragStartYMin = chartView.viewYMin
-                dragStartYMax = chartView.viewYMax
+                frame.dragStartY = event.y
+                frame.dragStartYMin = chartView.viewYMin
+                frame.dragStartYMax = chartView.viewYMax
             }
             onPositionChanged: function(event) {
                 if (pressed) {
                     var yRange = chartView.viewYMax - chartView.viewYMin
-                    var deltaValue = (event.y - dragStartY) / height * yRange
-                    chartView.viewYMin = dragStartYMin + deltaValue
-                    chartView.viewYMax = dragStartYMax + deltaValue
+                    var deltaValue = (event.y - frame.dragStartY) / height * yRange
+                    chartView.viewYMin = frame.dragStartYMin + deltaValue
+                    chartView.viewYMax = frame.dragStartYMax + deltaValue
                     chartView.update()
                 }
             }
@@ -63,6 +69,9 @@ FluFrame {
                 var center = chartView.viewYMax - event.y/height*yRange
                 chartView.viewYMax = center + event.y/height* (yRange*factor)
                 chartView.viewYMin = center - (height-event.y)/height*(yRange*factor)
+                frame.dragStartY = event.y
+                frame.dragStartYMin = chartView.viewYMin
+                frame.dragStartYMax = chartView.viewYMax
                 chartView.update()
             }
         }
@@ -99,6 +108,67 @@ FluFrame {
         }
         MouseArea {
             id: chartMouseArea
+            anchors.fill: parent
+            cursorShape: pressed?Qt.ClosedHandCursor:Qt.ArrowCursor
+            onDoubleClicked: function (event) {
+                var yRange = chartView.viewYMax - chartView.viewYMin
+                var yCenter = chartView.viewYMax - event.y / height * yRange
+                chartView.viewYMax = yCenter + event.y / height * (chartView.viewYRange)
+                chartView.viewYMin = yCenter - (height - event.y) / height * (chartView.viewYRange)
+
+                var xRange = chartView.viewXMax - chartView.viewXMin
+                var xCenter = chartView.viewXMin + event.x / width * xRange
+                chartView.viewXMax = xCenter + (width - event.x) / width * (chartView.viewXRange)
+                chartView.viewXMin = xCenter - event.x / width * (chartView.viewXRange)
+
+                chartView.update()
+            }
+            onPressed: function(event) {
+                frame.dragStartX = event.x
+                frame.dragStartY = event.y
+                frame.dragStartXMin = chartView.viewXMin
+                frame.dragStartYMin = chartView.viewYMin
+                frame.dragStartXMax = chartView.viewXMax
+                frame.dragStartYMax = chartView.viewYMax
+            }
+            onPositionChanged: function(event) {
+                if (pressed) {
+                    var Range = chartView.viewYMax - chartView.viewYMin
+                    var deltaValue = (event.y - frame.dragStartY) / height * Range
+                    chartView.viewYMin = frame.dragStartYMin + deltaValue
+                    chartView.viewYMax = frame.dragStartYMax + deltaValue
+
+                    Range = chartView.viewXMax - chartView.viewXMin
+                    deltaValue = -(event.x - frame.dragStartX) / width * Range
+                    chartView.viewXMin = frame.dragStartXMin + deltaValue
+                    chartView.viewXMax = frame.dragStartXMax + deltaValue
+
+                    chartView.update()
+                }
+            }
+            onWheel: function (event) {
+
+                var factor = event.angleDelta.y > 0 ? 0.8 : 1.25
+
+                var yRange = chartView.viewYMax - chartView.viewYMin
+                var yCenter = chartView.viewYMax - event.y / height * yRange
+                chartView.viewYMax = yCenter + event.y / height * (yRange * factor)
+                chartView.viewYMin = yCenter - (height - event.y) / height * (yRange * factor)
+
+                var xRange = chartView.viewXMax - chartView.viewXMin
+                var xCenter = chartView.viewXMin + event.x / width * xRange
+                chartView.viewXMax = xCenter + (width - event.x) / width * (xRange * factor)
+                chartView.viewXMin = xCenter - event.x / width * (xRange * factor)
+
+                frame.dragStartX = event.x
+                frame.dragStartY = event.y
+                frame.dragStartXMin = chartView.viewXMin
+                frame.dragStartXMax = chartView.viewXMax
+                frame.dragStartYMin = chartView.viewYMin
+                frame.dragStartYMax = chartView.viewYMax
+                chartView.update()
+
+            }
         }
     }
     /* === x axis === */
@@ -121,9 +191,9 @@ FluFrame {
             FluText {
                 height: parent.height
                 x: index===(xRep.count-1)? parent.width-width:index*parent.width/(xRep.count-1)
-                text: (chartView.viewXMin + (index / 4) * (chartView.viewXMax - chartView.viewXMin)).toFixed(1)
-                font.pixelSize: xMouseArea.pressed?15:10
-                font.bold: xMouseArea.pressed
+                text: (chartView.viewXMin + (index / (xRep.count-1)) * (chartView.viewXMax - chartView.viewXMin)).toFixed(1)
+                font.pixelSize: xMouseArea.pressed||chartMouseArea.pressed?15:10
+                font.bold: xMouseArea.pressed||chartMouseArea.pressed
                 color: FluTheme.dark ? "#888" : "#666"
                 horizontalAlignment: Text.AlignLeft
             }
@@ -132,20 +202,17 @@ FluFrame {
             id: xMouseArea
             anchors.fill: parent
             cursorShape: pressed?Qt.ClosedHandCursor:Qt.ArrowCursor
-            property real dragStartX: 0
-            property real dragStartXMin: 0
-            property real dragStartXMax: 0
             onPressed: function(event) {
-                dragStartX = event.x
-                dragStartXMin = chartView.viewXMin
-                dragStartXMax = chartView.viewXMax
+                frame.dragStartX = event.x
+                frame.dragStartXMin = chartView.viewXMin
+                frame.dragStartXMax = chartView.viewXMax
             }
             onPositionChanged: function(event) {
                 if (pressed) {
                     var xRange = chartView.viewXMax - chartView.viewXMin
-                    var deltaValue = -(event.x - dragStartX) / width * xRange
-                    chartView.viewXMin = dragStartXMin + deltaValue
-                    chartView.viewXMax = dragStartXMax + deltaValue
+                    var deltaValue = -(event.x - frame.dragStartX) / width * xRange
+                    chartView.viewXMin = frame.dragStartXMin + deltaValue
+                    chartView.viewXMax = frame.dragStartXMax + deltaValue
                     chartView.update()
                 }
             }
@@ -155,6 +222,9 @@ FluFrame {
                 var center = chartView.viewXMin + event.x/width*xRange
                 chartView.viewXMax = center + (width-event.x)/width*(xRange*factor)
                 chartView.viewXMin = center - event.x/width* (xRange*factor)
+                frame.dragStartX = event.x
+                frame.dragStartXMin = chartView.viewXMin
+                frame.dragStartXMax = chartView.viewXMax
                 chartView.update()
             }
         }
