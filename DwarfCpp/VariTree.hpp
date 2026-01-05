@@ -44,10 +44,10 @@ public:
         return parent->children.size()-1;
     }
 
-    std::string getName() const {return name;}
+    const std::string& getName() const {return name;}
     std::size_t getOffset() const {return offset;}
     std::size_t getAbsolute() const {return absolute;}
-    std::string getType() const {return type;}
+    const std::string& getType() const {return type;}
     std::size_t getSize() const {return size;}
 
     std::string data(int column) const {
