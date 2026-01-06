@@ -27,8 +27,8 @@ ExChartView::ExChartView(QQuickItem *parent) : QQuickItem(parent) {
     setFlag(QQuickItem::ItemHasContents, true);
     lineAttrModel = new LineAttrModel(this);
     backBuf.store(&bufA);
-    Backend::instance().setChartView(this);
-    connect(&Backend::instance(),&Backend::updatePath,this,&ExChartView::updatePath);
+
+    connect(this,&ExChartView::timingUpdate,this,&ExChartView::updatePath);
     connect(lineAttrModel, &LineAttrModel::dataChanged,this,[this](const QModelIndex &topLeft, const QModelIndex &bottomRight,const QList<int> &roles) {
         qDebug()<<"data changed" << topLeft<<bottomRight<<roles;
         onAttrChanged(topLeft,bottomRight,roles);
@@ -144,6 +144,22 @@ void ExChartView::updatePath(qreal runTime) {
         setViewXMin(runTime-getViewXRange());
     }
     update();
+}
+
+void ExChartView::updateData(qreal runTime) {
+    int index = 0;
+    for (auto & buf: *backBuf) {
+        auto point = QPointF(runTime,(++index*10)+0.5*getViewYRange()+0.3*getViewYRange()*std::sin(runTime/300*2*std::numbers::pi));
+        buf.append(point);
+    }
+
+    if (runTime-lastUpdateTime>30 || runTime<lastUpdateTime) {
+        switchBuf();
+        emit timingUpdate(runTime);
+        qDebug()<<"update "<<"xMin:"<<getViewXMin() << "xMax:"<<getViewXMax()
+        <<"yMin:"<<getViewYMin()<<"yMax:"<<getViewYMax();
+        lastUpdateTime = runTime;
+    }
 }
 
 void ExChartView::onAttrChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QList<int> &roles) {

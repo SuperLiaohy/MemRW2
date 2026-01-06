@@ -6,6 +6,8 @@
 #include <qqmlengine.h>
 #include <thread>
 
+
+class DisplayPluginInterface;
 class ExChartView;
 
 class Sync {
@@ -21,6 +23,14 @@ private:
     std::binary_semaphore sem_resume{0};      // A → B: 可以恢复运行了 (初始0)
 };
 
+class Clock {
+public:
+    void reset() {starTime=std::chrono::high_resolution_clock::now();}
+    template<typename T = std::chrono::microseconds>
+    std::size_t runTime() {return std::chrono::duration_cast<T>((std::chrono::high_resolution_clock::now()-starTime)).count();}
+private:
+    std::chrono::time_point<std::chrono::system_clock> starTime;
+};
 
 class Backend : public QObject {
     Q_OBJECT
@@ -40,14 +50,22 @@ public:
     void init();
     bool getRunning() {return  running;}
     void setRunning(bool run) {running.store(run);emit runningChanged();}
-    void setChartView(ExChartView* chart) {chartView=chart;}
+
     Sync sync{};
+    Clock clock{};
+    void requestHandler();
+    void updatePlugin(qreal runTime);
+
+    void pushPlugin(DisplayPluginInterface *plugin);
+    void erasePlugin(DisplayPluginInterface *plugin);
+
 signals:
     void runningChanged();
     void updatePath(qreal runTime);
 private:
-    qreal runTime;
-    ExChartView* chartView;
+
     std::atomic<bool> running{false};
     std::jthread samplingWorker;
+    std::vector<DisplayPluginInterface*> pluginContainer;
+
 };

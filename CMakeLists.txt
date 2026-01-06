@@ -34,9 +34,9 @@ qt_add_qml_module(MemRW
         Src/ExChartView/ExChartView.cpp Src/ExChartView/ExChartView.hpp
         Src/ExChartView/LineAttrModel.cpp Src/ExChartView/LineAttrModel.hpp
         Src/Backend/Backend.cpp Src/Backend/Backend.hpp
-        Src/VariMap/VariComponent.cpp Src/VariMap/VariComponent.hpp
-        Src/VariMap/DisplayPluginInterface.cpp Src/VariMap/DisplayPluginInterface.hpp
-        Src/VariMap/VariMap.cpp Src/VariMap/VariMap.hpp
+        Src/Backend/VariComponent.cpp Src/Backend/VariComponent.hpp
+        Src/Backend/DisplayPluginInterface.cpp Src/Backend/DisplayPluginInterface.hpp
+#        Src/Backend/DisplayPlugin.cpp Src/Backend/DisplayPluginInterface.hpp
 )
 
 target_link_libraries(MemRW PRIVATE

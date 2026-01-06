@@ -6,6 +6,8 @@
 
 #include <QQuickPaintedItem>
 #include <QQuickItem>
+
+#include "DisplayPluginInterface.hpp"
 #include "LineAttrModel.hpp"
 
 using PointBuf = QVector<QPointF>;
@@ -24,7 +26,7 @@ public:
     [[nodiscard]] QPointF at(quint32 index) const;
 };
 
-class ExChartView : public QQuickItem {
+class ExChartView : public QQuickItem, public DisplayPluginInterface {
     Q_OBJECT
     QML_ELEMENT
     Q_PROPERTY(LineAttrModel* lineAttrModel READ getLineAttrModel NOTIFY lineAttrModelChanged)
@@ -60,6 +62,7 @@ public:
     void setViewXRange(qreal range){ viewXRange = range; emit viewXRangeChanged();}
     void setViewYRange(qreal range){ viewYRange = range; emit viewYRangeChanged();}
 
+    void updateData(qreal runTime) override;
     void onAttrChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight,const QList<int> &roles);
     void onAttrRemoved(int index);
 signals:
@@ -70,6 +73,7 @@ signals:
     void viewYMaxChanged();
     void viewXRangeChanged();
     void viewYRangeChanged();
+    void timingUpdate(qreal runTime);
 private:
     qreal viewXRange = 5000;
     qreal viewYRange = 100;
@@ -83,4 +87,5 @@ private:
     LineAttrModel* lineAttrModel;
     QVector<PointBuf> bufA;
     QVector<PointBuf> bufB;
+    qreal lastUpdateTime = 0;
 };
