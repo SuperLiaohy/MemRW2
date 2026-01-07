@@ -44,6 +44,7 @@ public:
     QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *) override;
     void switchBuf();
     void updatePath(qreal runTime);
+    void updateData(qreal runTime) override;
     LineAttrModel* getLineAttrModel() {return lineAttrModel;}
     std::atomic<QVector<PointBuf>*> backBuf;
     std::atomic<QVector<PointBuf>*> frontBuf;
@@ -62,7 +63,6 @@ public:
     void setViewXRange(qreal range){ viewXRange = range; emit viewXRangeChanged();}
     void setViewYRange(qreal range){ viewYRange = range; emit viewYRangeChanged();}
 
-    void updateData(qreal runTime) override;
     void onAttrChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight,const QList<int> &roles);
     void onAttrRemoved(int index);
 signals:

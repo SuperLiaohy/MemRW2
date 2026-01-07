@@ -59,6 +59,7 @@ public:
     void pushPlugin(DisplayPluginInterface *plugin);
     void erasePlugin(DisplayPluginInterface *plugin);
 
+
 signals:
     void runningChanged();
     void updatePath(qreal runTime);

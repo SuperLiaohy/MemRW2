@@ -7,6 +7,9 @@ set(CMAKE_PREFIX_PATH "/home/liaohy/User/Env/Qt/SDK/6.9.3/gcc_64")
 find_package(Qt6 REQUIRED Quick)
 qt_standard_project_setup(REQUIRES 6.8)
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBUSB REQUIRED IMPORTED_TARGET libusb-1.0)
+
 add_subdirectory(DwarfCpp)
 add_executable(MemRW main.cpp)
 
@@ -36,6 +39,10 @@ qt_add_qml_module(MemRW
         Src/Backend/Backend.cpp Src/Backend/Backend.hpp
         Src/Backend/VariComponent.cpp Src/Backend/VariComponent.hpp
         Src/Backend/DisplayPluginInterface.cpp Src/Backend/DisplayPluginInterface.hpp
+        Src/USBInterface/DAPReader.cpp Src/USBInterface/DAPReader.h
+        Src/USBInterface/USBBulk.cpp Src/USBInterface/USBBulk.h
+        Src/USBInterface/USBDevDesc.cpp Src/USBInterface/USBDevDesc.h
+        Src/USBInterface/main_task.cpp Src/USBInterface/SWReg.h
 #        Src/Backend/DisplayPlugin.cpp Src/Backend/DisplayPluginInterface.hpp
 )
 
@@ -43,6 +50,14 @@ target_link_libraries(MemRW PRIVATE
         Qt6::Quick
         DwarfCpp
 )
+
+target_link_libraries(MemRW PRIVATE
+        PkgConfig::LIBUSB
+)
+
+
+message(STATUS libusb-- "${LIBUSB_INCLUDE_DIRS} ${LIBUSB_LIBRARY_DIRS} ${LIBUSB_LIBRARIES} ${LIBUSB_CFLAGS_OTHER}")
+
 
 include(GNUInstallDirs)
 install(TARGETS MemRW
