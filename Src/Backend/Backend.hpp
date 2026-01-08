@@ -61,6 +61,7 @@ public:
     Clock clock{};
     void requestHandler();
     void updatePlugin(qreal runTime);
+    void clearPluginData();
 
     void pushPlugin(DisplayPluginInterface *plugin);
     void erasePlugin(DisplayPluginInterface *plugin);

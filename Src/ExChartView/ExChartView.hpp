@@ -24,6 +24,7 @@ public:
     void write(const QPointF& point);
     void writeBuffer(const QVector<QPointF>& points);
     [[nodiscard]] QPointF at(quint32 index) const;
+    void clear() {writeHandle=0,len=0;};
 };
 
 class ExChartView : public QQuickItem, public DisplayPluginInterface {
@@ -45,6 +46,7 @@ public:
     void switchBuf();
     void updatePath(qreal runTime);
     void updateData(qreal runTime) override;
+    void clearData() override;
     LineAttrModel *getLineAttrModel() {return lineAttrModel;}
     std::atomic<QVector<PointBuf>*> backBuf;
     std::atomic<QVector<PointBuf>*> frontBuf;

@@ -5,9 +5,16 @@ import FluentUI
 
 FluFrame {
     id: frame
-    property alias lineAttrModel: chartView.lineAttrModel
     clip:true
 
+    // expose
+    property alias lineAttrModel: chartView.lineAttrModel
+    property alias viewXMax: chartView.viewXMax
+    property alias viewXMin: chartView.viewXMin
+    property alias viewYMin: chartView.viewYMin
+    property alias viewYMax: chartView.viewYMax
+
+    // internal variable
     property real dragStartY: 0
     property real dragStartYMin: 0
     property real dragStartYMax: 0

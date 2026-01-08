@@ -1,9 +1,7 @@
-import QtCore
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
-import QtQml
 import FluentUI
 import MemRWApp
 FluWindow {
@@ -28,36 +26,19 @@ FluWindow {
         anchors.topMargin: bar.height
         anchors.fill: parent
 
-        StateBar {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 50
-        }
-
-        // ==================== 主内容区 ====================
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            spacing: 8
-            // ==================== 曲线列表侧边栏 ====================
-            LineListView {
-                Layout.preferredWidth: 220
-                Layout.fillHeight: true
-                lineAttrModel: chart.lineAttrModel
-            }
-            // ==================== 图表区域 ====================
-            ExChart {
-                id: chart
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-            }
-        }
         // ==================== 控制栏 ====================
-        ControlBar {
+        ToolBar {
             Layout.fillWidth: true
             Layout.preferredHeight: 60
             padding: 10
-
         }
+
+        ChartPlugin {
+            id: chartPlugin
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+        }
+
     }
 
 
@@ -69,27 +50,6 @@ FluWindow {
         id:sheet
         size: parent.height*0.614
         maxSize: parent.height
-    }
-    Loader {
-        id: dialogLoader
-        active: false
-        sourceComponent: LineDialog {
-            running: false
-            visible: true
-            onClosing: {
-                visible = false
-                console.log("Dialog closing")
-                lineAttrModel = null
-                dialogLoader.close()
-            }
-        }
-        function open(model,object, openMode) {
-            active = true;
-            dialogLoader.item.open(model,object, openMode)
-        }
-        function close() {
-            active = false;
-        }
     }
 
     // ==================== 动画 ====================

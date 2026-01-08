@@ -150,4 +150,27 @@ FluFrame {
     function appendAction(modelNode) {
         dialogLoader.open(frame.lineAttrModel,modelNode,LineDialog.OpenMode.Add)
     }
+
+    Loader {
+        id: dialogLoader
+        active: false
+        sourceComponent: LineDialog {
+            running: false
+            visible: true
+            onClosing: {
+                visible = false
+                console.log("Dialog closing")
+                lineAttrModel = null
+                dialogLoader.close()
+            }
+        }
+        function open(model,object, openMode) {
+            active = true;
+            dialogLoader.item.open(model,object, openMode)
+        }
+        function close() {
+            active = false;
+        }
+    }
+
 }

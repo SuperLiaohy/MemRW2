@@ -20,6 +20,7 @@ void Backend::init() {
                 continue;
             } else if (started == false) {
                 daplink->resetMap(pluginContainer);
+                clearPluginData();
                 clock.reset();
                 started = true;
             }
@@ -64,6 +65,12 @@ void Backend::requestHandler() {
 void Backend::updatePlugin(qreal runTime) {
     for (auto& plugin: pluginContainer) {
         plugin->updateData(runTime);
+    }
+}
+
+void Backend::clearPluginData() {
+    for (auto& plugin: pluginContainer) {
+        plugin->clearData();
     }
 }
 

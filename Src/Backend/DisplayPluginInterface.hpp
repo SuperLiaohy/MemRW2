@@ -16,6 +16,7 @@ public:
     virtual ~DisplayPluginInterface();
 
     virtual void updateData(qreal runTime) = 0;
+    virtual void clearData() = 0;
 
     void pushUnit(VariNode* node);
     void eraseUnit(int index);

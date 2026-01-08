@@ -331,6 +331,7 @@ DAP::TransferRequest DAPReader::Request(uint8_t APnDP, uint8_t RnW, uint8_t reg,
 }
 
 void DAPReader::resetMap(const std::vector<DisplayPluginInterface *> &plugins) {
+    addrMap.clear();
     for (auto plugin: plugins) {
         for (auto & variComponent: plugin->variContainer) {
             auto base = variComponent->getAddress()&0xfffffffC;

@@ -156,6 +156,16 @@ void ExChartView::updateData(qreal runTime) {
     }
 }
 
+void ExChartView::clearData() {
+    for (auto & line: lines) {line.clear();}
+    for (auto & buf: bufA) {buf.clear();}
+    for (auto & buf: bufB) {buf.clear();}
+    setViewXMin(0);
+    setViewXMax(viewXRange);
+    setViewYMin(0);
+    setViewYMax(viewYRange);
+}
+
 void ExChartView::onAttrChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QList<int> &roles) {
     if (topLeft.row()!=bottomRight.row())return;
     if (roles.empty())return;

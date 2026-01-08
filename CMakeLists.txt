@@ -19,12 +19,13 @@ qt_add_qml_module(MemRW
         QML_FILES
         Qml/Main.qml
         Qml/VariWindow.qml
-        Qml/ControlBar.qml
-        Qml/StateBar.qml
+        Qml/ToolBar.qml
 
         Qml/ChartPlugin/LineDialog.qml
         Qml/ChartPlugin/ExChart.qml
         Qml/ChartPlugin/LineListView.qml
+        Qml/ChartPlugin/ChartBar.qml
+        Qml/ChartPlugin/ChartPlugin.qml
 
         SOURCES
         Src/Variable/TreeModel.cpp Src/Variable/TreeModel.hpp
