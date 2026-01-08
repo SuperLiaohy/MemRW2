@@ -7,6 +7,7 @@
 #include <thread>
 
 
+#include "DAPReader.h"
 class DisplayPluginInterface;
 class ExChartView;
 
@@ -37,7 +38,8 @@ class Backend : public QObject {
     QML_ELEMENT
     QML_SINGLETON
     Q_PROPERTY(bool running READ getRunning WRITE setRunning NOTIFY runningChanged)
-    Backend() = default;
+    Q_PROPERTY(bool connected READ getConnected NOTIFY connectedChanged)
+    Backend() : daplink(std::make_unique<DAPReader>()) {};
 public:
     static Backend& instance() {static Backend backend;return backend;}
     static Backend* create(QQmlEngine* qmlEngine, QJSEngine* jsEngine) {
@@ -50,6 +52,10 @@ public:
     void init();
     bool getRunning() {return  running;}
     void setRunning(bool run) {running.store(run);emit runningChanged();}
+    bool getConnected() {return  connected;}
+
+    Q_INVOKABLE bool connect();
+    Q_INVOKABLE void disconnect();
 
     Sync sync{};
     Clock clock{};
@@ -59,14 +65,15 @@ public:
     void pushPlugin(DisplayPluginInterface *plugin);
     void erasePlugin(DisplayPluginInterface *plugin);
 
-
 signals:
     void runningChanged();
+    void connectedChanged();
     void updatePath(qreal runTime);
 private:
 
     std::atomic<bool> running{false};
+    bool connected{false};
     std::jthread samplingWorker;
     std::vector<DisplayPluginInterface*> pluginContainer;
-
+    std::unique_ptr<DAPReader> daplink;
 };

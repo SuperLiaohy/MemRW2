@@ -13,7 +13,28 @@ FluFrame {
         anchors.fill: parent
         spacing: 10
         FluFilledButton {
-            text: Backend.running ? qsTr("暂停") : qsTr("开始")
+            text: Backend.connected ? qsTr("断开") : qsTr("连接")
+            Layout.preferredWidth: 65
+            onClicked: {
+                if (!Backend.connected) {
+                    let res = Backend.connect()
+                    if (res) showSuccess("connection succeed")
+                    else showError("connection failed")
+                } else {
+                    Backend.disconnect()
+                    showSuccess("disconnection")
+                }
+                // if (Backend.running) {
+                //     console.log("=== connected ===")
+                // } else {
+                //     console.log("=== disconnect ===")
+                // }
+                // Backend.running=!Backend.running
+            }
+        }
+        FluFilledButton {
+            text: Backend.running && Backend.connected ? qsTr("暂停") : qsTr("开始")
+            enabled: Backend.connected
             Layout.preferredWidth: 65
             onClicked: {
                 if (Backend.running) {
@@ -44,7 +65,6 @@ FluFrame {
         FluButton {
             text: frame.showLineList ? qsTr("隐藏列表") : qsTr("显示列表")
             Layout.preferredWidth: 75
-            // enabled:  > 0
             onClicked:  {
                 frame.showLineList = !frame.showLineList
             }

@@ -3,8 +3,6 @@
 #include <QFileSystemModel>
 #include <qqmlcontext.h>
 
-#include "Src/Line/LineGroupModel.hpp"
-#include "Src/Line/LineModel.hpp"
 #include "Src/Variable/TreeModel.hpp"
 #include "Backend.hpp"
 

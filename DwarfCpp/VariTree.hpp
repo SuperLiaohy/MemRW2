@@ -24,6 +24,7 @@ public:
     void setAbsolute(const std::size_t a)  {absolute = a;}
     void setType(const std::string &t)  {type = t;}
     void setSize(const std::size_t s)  {size = s;}
+    void updateAbsolute();
 
     VariNode* getParent() const {return parent;}
     VariNode* getChild(std::size_t index) const {return children[index];}
@@ -62,7 +63,7 @@ public:
             case 2: {
                 if (parent == nullptr) return {};;
                 if (parent->parent== nullptr) return {};;
-                return std::format("0x{:x}", offset);
+                return std::format("0x{:x}", absolute);
             }
             case 3:
                 if (parent == nullptr) return {};;
@@ -74,7 +75,7 @@ public:
         }
     }
 
-private:
+protected:
     VariNode* parent;
     std::vector<VariNode*> children;
     std::string name;

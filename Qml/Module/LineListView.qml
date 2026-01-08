@@ -34,7 +34,7 @@ FluFrame {
                     anchors.fill: parent
                     onClicked: function (event) {
                         event.accepted = true
-                        sheet.openWithModel(frame.lineAttrModel)
+                        sheet.openToAppend(frame.appendAction)
                     }
                 }
             }
@@ -152,5 +152,8 @@ FluFrame {
                 }
             }
         }
+    }
+    function appendAction(modelNode) {
+        dialogLoader.open(frame.lineAttrModel,modelNode,LineDialog.OpenMode.Add)
     }
 }

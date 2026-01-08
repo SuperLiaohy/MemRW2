@@ -17,8 +17,9 @@ public:
 
     virtual void updateData(qreal runTime) = 0;
 
-    void pushUnit(const std::shared_ptr<VariNode>& node);
+    void pushUnit(VariNode* node);
     void eraseUnit(int index);
+    void eraseUnits(QSet<int>& indexes);
 
     std::vector<std::shared_ptr<VariComponent>> variContainer;
 };

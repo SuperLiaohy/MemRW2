@@ -18,6 +18,13 @@ void VariNode::addChildrenTree(VariNode* tree) {
     }
 }
 
+void VariNode::updateAbsolute() {
+    for (auto child: children) {
+        child->correctAbsolute();
+        child->updateAbsolute();
+    }
+}
+
 void VariNode::addChildrenTreeHelper(VariNode *tree) {
     if (children.empty()) return;
     children.resize(tree->getChildSize());

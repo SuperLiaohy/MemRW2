@@ -7,6 +7,7 @@
 #include <QtAlgorithms>
 #include "ExChartView.hpp"
 #include "Backend.hpp"
+#include "VariComponent.hpp"
 
 void ExLine::write(const QPointF &point) {
     buf[writeHandle] = point;
@@ -23,28 +24,22 @@ QPointF ExLine::at(quint32 index) const {
     return buf[(writeHandle + index) % capacity];
 }
 
-ExChartView::ExChartView(QQuickItem *parent) : QQuickItem(parent) {
+ExChartView::ExChartView(QQuickItem *parent) : QQuickItem(parent), lineAttrModel(new LineAttrModel(this)), backBuf(&bufA) {
     setFlag(QQuickItem::ItemHasContents, true);
-    lineAttrModel = new LineAttrModel(this);
-    backBuf.store(&bufA);
-
     connect(this,&ExChartView::timingUpdate,this,&ExChartView::updatePath);
-    connect(lineAttrModel, &LineAttrModel::dataChanged,this,[this](const QModelIndex &topLeft, const QModelIndex &bottomRight,const QList<int> &roles) {
-        qDebug()<<"data changed" << topLeft<<bottomRight<<roles;
-        onAttrChanged(topLeft,bottomRight,roles);
-    });
-    connect(lineAttrModel, &LineAttrModel::rowsInserted,this,[this](const QModelIndex &parent, int first, int last) {
-        for (int i = 0; i < last-first+1; ++i) {
-            lines.append(ExLine{lineAttrModel->lineAttrs[first+i]->config.capacity});
-            bufA.append(PointBuf{});
-            bufB.append(PointBuf{});
-        }
-    });
-    connect(lineAttrModel, &LineAttrModel::rowsRemoved,this,[this](const QModelIndex &parent, int first, int last) {
-        for (int i = first; i <=last; ++i) {lines[i].deleteLater = true;}
-        update();
-    });
-    connect(lineAttrModel, &LineAttrModel::modelReset,this,[](){});
+    connect(lineAttrModel, &LineAttrModel::dataChanged, this,&ExChartView::onAttrChanged);
+    // connect(lineAttrModel, &LineAttrModel::rowsInserted,this,[this](const QModelIndex &parent, int first, int last) {
+    //     for (int i = 0; i < last-first+1; ++i) {
+    //         lines.append(ExLine{lineAttrModel->lineAttrs[first+i]->config.capacity});
+    //         bufA.append(PointBuf{});
+    //         bufB.append(PointBuf{});
+    //     }
+    // });
+    // connect(lineAttrModel, &LineAttrModel::rowsRemoved,this,[this](const QModelIndex &parent, int first, int last) {
+    //     for (int i = first; i <=last; ++i) {lines[i].deleteLater = true;}
+    //     update();
+    // });
+    // connect(lineAttrModel, &LineAttrModel::modelReset,this,[](){});
 }
 
 ExChartView::~ExChartView() {
@@ -80,6 +75,7 @@ QSGNode * ExChartView::updatePaintNode(QSGNode *qsg_node, UpdatePaintNodeData *u
             erase_if(bufA, [&deleteIndexes,&idx](auto&){return deleteIndexes.contains(idx++);});
             idx=0;
             erase_if(bufB, [&deleteIndexes,&idx](auto&){return deleteIndexes.contains(idx++);});
+            eraseUnits(deleteIndexes);
         });
     }
     for (int i = 0; i < lines.size(); ++i) {
@@ -149,15 +145,16 @@ void ExChartView::updatePath(qreal runTime) {
 void ExChartView::updateData(qreal runTime) {
     int index = 0;
     for (auto & buf: *backBuf) {
-        auto point = QPointF(runTime,(++index*10)+0.5*getViewYRange()+0.3*getViewYRange()*std::sin(runTime/300*2*std::numbers::pi));
+        // auto point = QPointF(runTime,(++index*10)+0.5*getViewYRange()+0.3*getViewYRange()*std::sin(runTime/300*2*std::numbers::pi));
+        auto point = QPointF(runTime,variContainer[index]->fValue);
         buf.append(point);
     }
 
     if (runTime-lastUpdateTime>30 || runTime<lastUpdateTime) {
         switchBuf();
         emit timingUpdate(runTime);
-        qDebug()<<"update "<<"xMin:"<<getViewXMin() << "xMax:"<<getViewXMax()
-        <<"yMin:"<<getViewYMin()<<"yMax:"<<getViewYMax();
+        // qDebug()<<"update "<<"xMin:"<<getViewXMin() << "xMax:"<<getViewXMax()
+        // <<"yMin:"<<getViewYMin()<<"yMax:"<<getViewYMax();
         lastUpdateTime = runTime;
     }
 }
@@ -197,5 +194,12 @@ void ExChartView::onAttrChanged(const QModelIndex &topLeft, const QModelIndex &b
 void ExChartView::onAttrRemoved(int index) {
     lines[index].deleteLater = true;
     update();
+}
+
+void ExChartView::onAttrPushed(VariNode* node) {
+    lines.append(ExLine{lineAttrModel->lineAttrs.last()->config.capacity});
+    bufA.append(PointBuf{});
+    bufB.append(PointBuf{});
+    pushUnit(node);
 }
 

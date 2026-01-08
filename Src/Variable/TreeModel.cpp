@@ -17,11 +17,21 @@ TreeModel::TreeModel(const std::shared_ptr<VariTree> &data, QObject *parent)
 TreeModel::~TreeModel() {
 }
 
+QHash<int, QByteArray> TreeModel::roleNames() const {
+    return {
+            { Qt::DisplayRole, "display" },
+            {SelfRole, "self"},
+        };
+}
+
 QVariant TreeModel::data(const QModelIndex &index, int role) const {
     if (!index.isValid()) return QVariant();
     if (role == Qt::DisplayRole) {
         auto item = static_cast<VariNode *>(index.internalPointer());
         return QString::fromStdString(item->data(index.column()));
+    } else if (role == SelfRole) {
+        auto item = static_cast<VariNode *>(index.internalPointer());
+        return QVariant::fromValue(item);
     }
     return QVariant();
 }

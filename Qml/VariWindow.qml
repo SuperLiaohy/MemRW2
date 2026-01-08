@@ -7,7 +7,8 @@ import FluentUI
 FluSheet {
     id: sheet
 
-    property var lineAttrModel: null
+    property var appendAction: function(modelNode) {}
+
     background: FluRectangle {
         radius: [30,30,0,0]
         FluShadow{
@@ -237,7 +238,7 @@ FluSheet {
                 sourceComponent: FluIconButton {
                     iconSource: FluentIcons.Add
                     onClicked: {
-                        dialogLoader.open(sheet.lineAttrModel,model.display,LineDialog.OpenMode.Add)
+                        sheet.appendAction(model);
                         // lineModel.appendLine(model.display,"red")
                     }
                 }
@@ -259,8 +260,8 @@ FluSheet {
         }
     }
 
-    function openWithModel(model) {
-        sheet.lineAttrModel = model
+    function openToAppend(f) {
+        sheet.appendAction = f;
         open(FluSheetType.Bottom)
     }
 }

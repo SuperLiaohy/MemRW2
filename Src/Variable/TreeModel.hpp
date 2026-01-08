@@ -13,10 +13,13 @@ class TreeModel : public QAbstractItemModel
 
 public:
     Q_DISABLE_COPY_MOVE(TreeModel)
-
+    enum RoleNames {
+        SelfRole = Qt::UserRole + 1,
+    };
     explicit TreeModel(const std::shared_ptr<VariTree> &header, QObject *parent = nullptr);
     ~TreeModel() override;
 
+    QHash<int, QByteArray> roleNames() const override;
     QVariant data(const QModelIndex &index, int role) const override;
     // Qt::ItemFlags flags(const QModelIndex &index) const override;
     QVariant headerData(int section, Qt::Orientation orientation,

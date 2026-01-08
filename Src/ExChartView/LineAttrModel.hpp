@@ -80,7 +80,7 @@ public:
     bool setData(const QModelIndex &index, const QVariant &value, int role) override;
     Qt::ItemFlags flags(const QModelIndex &index) const override;
 
-    Q_INVOKABLE void appendLine(const QString& name, const QColor& color, quint32 bufferCapacity);
+    Q_INVOKABLE void appendLine(const QString& name, const QColor& color, quint32 bufferCapacity, QVariant node);
     Q_INVOKABLE void removeLine(int index);
     friend ExChartView;
 private:

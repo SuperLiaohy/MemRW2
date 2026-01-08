@@ -37,8 +37,7 @@ std::shared_ptr<VariTree> getVariTree(std::string path) {
                 auto node = new VariNode(nullptr);
                 variTree->addChild(node);
                 node->setName(VariTree::contextStr() + *name);
-                node->setOffset(0);
-                node->setAbsolute(*loc);
+                node->setOffset(*loc);
                 node->setType(*typeName);
                 auto size = type.getSize();
                 if (size!=std::nullopt) {node->setSize(*size);}
@@ -98,7 +97,6 @@ std::shared_ptr<VariTree> getVariTree(std::string path) {
         else variTree->addChild(cuNode);
         std::clog << std::endl;
     }
-    // auto it = variTree->typeMap["FDCAN_InitTypeDef"];
-    // std::clog << std::endl;
+    variTree->updateAbsolute();
     return variTree;
 }

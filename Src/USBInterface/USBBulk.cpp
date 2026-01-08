@@ -13,6 +13,7 @@ int USBBulk::transmit(uint8_t *data, uint32_t len, uint32_t timeout) {
 
 int USBBulk::receive(std::vector<uint8_t> &data, uint32_t timeout) {
     int transferred = 0;
+    data.resize(data.capacity());
     auto res = libusb_bulk_transfer(dev, desc.bulk_in_endpoints, data.data(), data.capacity(), &transferred, timeout);
     data.resize(transferred);
     return res;

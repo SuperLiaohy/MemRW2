@@ -5,6 +5,7 @@
 #include "VariComponent.hpp"
 #include "DisplayPluginInterface.hpp"
 
-VariComponent::VariComponent(const std::shared_ptr<VariNode> &node)  : active(true),
-name(node->getName()), size(node->getSize()), type(node->getType()), address(node->getAbsolute()) {
+VariComponent::VariComponent(VariNode* node)  : active(true),
+name(node->getName()), size(node->getSize()), address(node->getAbsolute()) {
+    type = Type::UINT32;
 }

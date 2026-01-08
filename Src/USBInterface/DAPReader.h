@@ -66,6 +66,12 @@ enum ResponseStatus {
     DAP_OK = 0x00,
     DAP_ERROR = 0xFF
 };
+enum TransferResponseStatus {
+    TRANSFER_OK = 0x01,
+    TRANSFER_WAIT = 0x02,
+    TRANSFER_FAULT = 0x04,
+    TRANSFER_NO_ACK = 0x07,
+};
 #pragma pack(push,1)
 struct TransferRequest {
     struct {
@@ -98,10 +104,10 @@ private:
 class DAPReader {
 public:
     DAPReader();
+    ~DAPReader();
 
-    static SerialDebugInterface sw;
-    std::unique_ptr<USBBulk> usb;
-
+    bool auto_connect();
+    void disconnect();
     void attach_to_target();
     void auto_configure_ap();
     int dap_connect(uint8_t port);
@@ -136,13 +142,22 @@ public:
     }
 
     void resetMap(const std::vector<DisplayPluginInterface*>& plugins);
-    void transferFromMapRequests();
+    int updateVari(std::vector<DisplayPluginInterface*>& plugins);
 private:
+    void getData(VariComponent* vari,all_form* words);
+    void pushRequest(const DAP::TransferRequest& request);
     void pushMapRequests(std::size_t addr);
     void generateMapRequests();
+    int transferFromMapRequests();
 
+    static SerialDebugInterface sw;
+    std::unique_ptr<USBBulk> usb;
     std::vector<uint8_t> response_buffer;
-    std::multimap<std::size_t,VariComponent*> addrMap;
-    std::vector<DAP::TransferRequest> mapRequests;
 
+    std::multimap<std::size_t,VariComponent*> addrMap;
+    // std::vector<std::uint32_t> mapResponseBuf;
+    std::vector<std::uint8_t> mapRequestBuf;
+    std::size_t requestCount;
+
+    // std::vector<DAP::TransferRequest> mapRequests;
 };

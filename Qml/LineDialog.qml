@@ -32,6 +32,7 @@ FluWindow {
     property string editName: ""
     property color editColor: "#409EFF"
     property int editBufferSize: 5000
+    property var modelNode: null
 
     // ⭐ 预设颜色
     property var presetColors: [
@@ -42,13 +43,14 @@ FluWindow {
     function open(model,object, openMode) {
         // 加载当前属性
         if (openMode===LineDialog.OpenMode.Add) {
-            editName = object
+            editName = object.display
             editColor = "red"
             editBufferSize = 5000
             console.log("Opening dialog for vari:", "name:", editName, "OpenMode: Add")
             mode = openMode
             visible = true
             lineAttrModel = model;
+            modelNode = object.self;
         } else if (openMode===LineDialog.OpenMode.Change) {
             editName = object.name
             editColor = object.color
@@ -314,7 +316,7 @@ FluWindow {
                         modelObject.color = dialog.editColor
                         modelObject.capacity = dialog.editBufferSize
                     } else if (dialog.mode===LineDialog.OpenMode.Add) {
-                        dialog.lineAttrModel.appendLine(dialog.editName, dialog.editColor, dialog.editBufferSize);
+                        dialog.lineAttrModel.appendLine(dialog.editName, dialog.editColor, dialog.editBufferSize, modelNode);
                         showSuccess("Add Succeed "+dialog.editName)
                     }
                     console.log("=== Properties saved ===")

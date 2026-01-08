@@ -14,12 +14,17 @@ DisplayPluginInterface::~DisplayPluginInterface() {
     Backend::instance().erasePlugin(this);
 }
 
-void DisplayPluginInterface::pushUnit(const std::shared_ptr<VariNode>& node) {
+void DisplayPluginInterface::pushUnit(VariNode* node) {
     auto vari = std::make_shared<VariComponent>(node);
     variContainer.push_back(vari);
 }
 
 void DisplayPluginInterface::eraseUnit(int index) {
     variContainer.erase(variContainer.begin()+index);
+}
+
+void DisplayPluginInterface::eraseUnits(QSet<int>& indexes) {
+    int index=0;
+    erase_if(variContainer, [&indexes,&index](auto&){return indexes.contains(index++);});
 }
 

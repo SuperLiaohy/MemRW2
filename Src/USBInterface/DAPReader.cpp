@@ -27,13 +27,22 @@ namespace {
     uint8_t DAP_Connect = 0x02;
 }
 
-DAPReader::DAPReader() : response_buffer(255 * 5 + 3) {
+DAPReader::DAPReader() : response_buffer(255 * 5 + 3), mapRequestBuf(255*5+3),requestCount(0) {
+    // auto_connect();
+}
+
+DAPReader::~DAPReader() {
+    disconnect();
+}
+
+bool DAPReader::auto_connect() {
     USBBulk::init();
     libusb_device **device_list = nullptr;
-
     int32_t device_count = libusb_get_device_list(USBBulk::Context(), &device_list);
-    if (device_count < 0)
-        throw std::runtime_error("Could not find any usb devices.");
+    if (device_count < 0) {
+        std::cout << "Could not find any usb devices."<<std::endl;
+        return false;
+    }
     std::vector<std::shared_ptr<USBDevDesc> > devs;
     for (ssize_t i = 0; i < device_count; ++i) {
         libusb_device *device = device_list[i];
@@ -112,8 +121,17 @@ DAPReader::DAPReader() : response_buffer(255 * 5 + 3) {
             break;
         };
     }
-    if (usb == nullptr) throw std::runtime_error("no usb bulk be found.");
+    if (usb == nullptr) {
+        std::cout << "no usb bulk be found." << std::endl;
+        return false;
+    }
     std::cout << usb->desc << std::endl;
+    return true;
+}
+
+void DAPReader::disconnect() {
+    usb.reset();
+    USBBulk::exit();
 }
 
 void DAPReader::attach_to_target() {
@@ -331,40 +349,79 @@ void DAPReader::resetMap(const std::vector<DisplayPluginInterface *> &plugins) {
             auto base = variComponent->getAddress()&0xfffffffC;
             addrMap.insert({base,variComponent.get()});
             if (((variComponent->getAddress()&0x00000003)+variComponent->getSize())>4) {
-                addrMap.insert({base+4,variComponent.get()});
+                addrMap.insert({base+4,nullptr});
                 if (((variComponent->getAddress()&0x00000003)+variComponent->getSize())>8)
-                    addrMap.insert({base+8,variComponent.get()});
+                    addrMap.insert({base+8,nullptr});
             }
         }
     }
+    generateMapRequests();
 }
 
-void DAPReader::transferFromMapRequests() {
-    std::vector<DAP::TransferResponse> receive(255);
-    receive.resize(mapRequests.size());
-    transfer(mapRequests, receive);
+int DAPReader::transferFromMapRequests() {
+    usb->transmit(mapRequestBuf);
+    usb->receive(response_buffer);
+    if (response_buffer[0] != DAP_Transfer) return DAP::DAP_ERROR;
+    if (response_buffer[2] != DAP::TRANSFER_OK) return response_buffer[2];
+    if (response_buffer[1]!=(requestCount)) return DAP::DAP_ERROR;
+    return DAP::TRANSFER_OK;
+}
+
+int DAPReader::updateVari(std::vector<DisplayPluginInterface *> &plugins) {
+    auto res = transferFromMapRequests();
+    if (res!=DAP::TRANSFER_OK)return res;
+    auto word = reinterpret_cast<all_form *>(&response_buffer[3]);
+    std::size_t last = 0;
+    std::size_t index = 0;
+    for (auto item: addrMap) {
+        auto base = item.first;
+        auto vari = item.second;
+        if (vari==nullptr)continue;
+        getData(vari,&word[index]);
+        if (last!=base) {++index;}
+        last = base;
+    }
+    return DAP::TRANSFER_OK;
+}
+
+void DAPReader::pushRequest(const DAP::TransferRequest &request) {
+    if (request.request.RnW == 1 && request.request.ValueMatch == 0 && request.request.MatchMask == 0) {
+        mapRequestBuf.push_back(std::bit_cast<std::uint8_t>(request.request));
+    } else {
+        mapRequestBuf.resize(mapRequestBuf.size()+5);
+        uint8_t*ptr=&mapRequestBuf[mapRequestBuf.size()-5];
+        memcpy(ptr,&request,5);
+    }
 }
 
 void DAPReader::pushMapRequests(std::size_t addr) {
     if (sw.ap.tar.has_value()) {
         if (sw.ap.tar->data != addr) {
-            mapRequests.push_back(APWriteRequest(SW::MEM_AP::TAR, addr));
+            ++requestCount;
+            pushRequest(APWriteRequest(SW::MEM_AP::TAR, addr));
         }
         sw.ap.tar->data = addr+4;
         if ((sw.ap.tar->data)&(0x400-1)) {
             sw.ap.tar.reset();
         }
     } else {
-        mapRequests.push_back(APWriteRequest(SW::MEM_AP::TAR, addr));
+        ++requestCount;
+        pushRequest(APWriteRequest(SW::MEM_AP::TAR, addr));
         sw.ap.tar = SW::MEM_AP::TARReg(addr+4);
         if ((sw.ap.tar->data)&(0x400-1)) {
             sw.ap.tar.reset();
         }
     }
+    ++requestCount;
+    pushRequest(APReadRequest(SW::MEM_AP::DRW));
 }
 
 void DAPReader::generateMapRequests() {
-    mapRequests.clear();
+    requestCount=0;
+    mapRequestBuf.clear();
+    mapRequestBuf.push_back(5);
+    mapRequestBuf.push_back(0);
+    mapRequestBuf.push_back(0);
     std::size_t last = 0;
     for (auto & addr: addrMap) {
         auto& base = addr.first;
@@ -373,4 +430,117 @@ void DAPReader::generateMapRequests() {
             last=base;
         }
     }
+    mapRequestBuf[2]=requestCount;
+}
+
+void DAPReader::getData(VariComponent *vari, all_form *words) {
+        auto offset = vari->getAddress()&0x03;
+        switch (vari->getType()) {
+            case VariComponent::Type::INT8: {
+                vari->fValue = vari->value.i8 = words[0].i8[offset];
+            }
+            break;
+            case VariComponent::Type::UINT8: {
+                vari->fValue = vari->value.u8 = words[0].u8[offset];;
+            }
+            break;
+            case VariComponent::Type::INT16: {
+                if (offset > 2)
+                    vari->fValue = vari->value.i16 = std::bit_cast<int16_t>(
+                        static_cast<uint16_t>((words[0].u8[offset] | words[1].u8[0] << 8)));
+                else
+                    vari->fValue = vari->value.i16 = std::bit_cast<int16_t>(
+                        static_cast<uint16_t>((words[0].u8[offset] | words[0].u8[offset + 1] << 8)));
+            }
+            break;
+            case VariComponent::Type::UINT16: {
+                if (offset > 2)
+                    vari->fValue = vari->value.u16 = (static_cast<uint16_t>((words[0].u8[offset] | words[1].u8[0] << 8)));
+                else
+                    vari->fValue = vari->value.u16 = (static_cast<uint16_t>((words[0].u8[offset] | words[0].u8[offset + 1] << 8)));
+            }
+            break;
+            case VariComponent::Type::INT32: {
+                switch (offset) {
+                    case 0:
+                        vari->fValue = vari->value.i32 = words[0].i32;
+                        break;
+                    case 1:
+                        vari->fValue = vari->value.i32 = static_cast<int32_t>(words[0].u8[1]
+                                                               | words[0].u8[2] << 8
+                                                               | words[0].u8[3] << 16
+                                                               | words[1].u8[0] << 24);
+                        break;
+                    case 2:
+                        vari->fValue = vari->value.i32 = static_cast<int32_t>(words[0].u16[1]
+                                                               | words[1].u16[0] << 16);
+                        break;
+                    case 3:
+                        vari->fValue = vari->value.i32 = static_cast<int32_t>(words[0].u8[3]
+                                                               | words[1].u8[0] << 8
+                                                               | words[1].u8[1] << 16
+                                                               | words[1].u8[2] << 24);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            break;
+            case VariComponent::Type::UINT32: {
+                switch (offset) {
+                    case 0:
+                        vari->fValue = vari->value.u32 = words[0].u32;
+                        break;
+                    case 1:
+                        vari->fValue = vari->value.u32 = (words[0].u8[1]
+                                           | words[0].u8[2] << 8
+                                           | words[0].u8[3] << 16
+                                           | words[1].u8[0] << 24);
+                        break;
+                    case 2:
+                        vari->fValue = vari->value.u32 = (words[0].u16[1]
+                                           | words[1].u16[0] << 16);
+                        break;
+                    case 3:
+                        vari->fValue = vari->value.u32 = (words[0].u8[3]
+                                           | words[1].u8[0] << 8
+                                           | words[1].u8[1] << 16
+                                           | words[1].u8[2] << 24);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            break;
+            case VariComponent::Type::FLOAT: {
+                switch (offset) {
+                    case 0:
+                        vari->fValue = vari->value.f32 = words[0].f32;
+                        break;
+                    case 1:
+                        vari->fValue = vari->value.f32 = std::bit_cast<float>(words[0].u8[1]
+                                                               | words[0].u8[2] << 8
+                                                               | words[0].u8[3] << 16
+                                                               | words[1].u8[0] << 24);
+                        break;
+                    case 2:
+                        vari->fValue = vari->value.f32 = std::bit_cast<float>(words[0].u16[1]
+                                                               | words[1].u16[0] << 16);
+                        break;
+                    case 3:
+                        vari->fValue = vari->value.f32 = std::bit_cast<float>(words[0].u8[3]
+                                                               | words[1].u8[0] << 8
+                                                               | words[1].u8[1] << 16
+                                                               | words[1].u8[2] << 24);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            break;
+            case VariComponent::Type::DOUBLE:
+            case VariComponent::Type::INT64:
+            case VariComponent::Type::UINT64:
+                break;
+        }
 }

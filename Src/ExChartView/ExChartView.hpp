@@ -45,7 +45,7 @@ public:
     void switchBuf();
     void updatePath(qreal runTime);
     void updateData(qreal runTime) override;
-    LineAttrModel* getLineAttrModel() {return lineAttrModel;}
+    LineAttrModel *getLineAttrModel() {return lineAttrModel;}
     std::atomic<QVector<PointBuf>*> backBuf;
     std::atomic<QVector<PointBuf>*> frontBuf;
 
@@ -65,6 +65,7 @@ public:
 
     void onAttrChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight,const QList<int> &roles);
     void onAttrRemoved(int index);
+    void onAttrPushed(VariNode* node);
 signals:
     void lineAttrModelChanged();
     void viewXMaxChanged();

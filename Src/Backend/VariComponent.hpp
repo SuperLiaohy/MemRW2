@@ -10,13 +10,16 @@
 class DisplayPluginInterface;
 class VariComponent {
 public:
-    VariComponent(const std::shared_ptr<VariNode>& info);
+    enum class Type { INT8, UINT8, INT16, UINT16, INT32, UINT32, INT64, UINT64, FLOAT, DOUBLE};
+
+    VariComponent(VariNode* info);
 
     [[nodiscard]] const std::string& getName() const {return name;}
     [[nodiscard]] std::size_t getSize() const {return size;}
-    [[nodiscard]] const std::string& getType() const {return type;}
+    [[nodiscard]] Type getType() const {return type;}
     [[nodiscard]] std::size_t getAddress() const {return address;}
 
+    qreal fValue;
     union {
         std::uint8_t u8;
         std::uint16_t u16;
@@ -29,12 +32,12 @@ public:
         std::int64_t i64;
 
         float f32;
-        float f64;
+        double f64;
     } value;
 private:
     bool active;
     std::string name;
     std::size_t size;
-    std::string type;
+    Type type;
     std::size_t address;
 };

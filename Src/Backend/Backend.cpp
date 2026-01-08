@@ -5,29 +5,60 @@
 #include "Backend.hpp"
 
 #include "ExChartView.hpp"
+#include "Src/USBInterface/DAPReader.h"
 
 void Backend::init() {
     samplingWorker = std::jthread([this](const std::stop_token& stoken) {
-        bool lastRun = running;
+        // std::unique_ptr<DAPReader> daplink = std::make_unique<DAPReader>();
+        bool started = false;
         clock.reset();
         while (!stoken.stop_requested()) {
             requestHandler();
-            if (lastRun==false&&running==true) {
-                clock.reset();
-            }
-            lastRun = running;
+
             if (!running) {
+                started = false;
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 continue;
+            } else if (started == false) {
+                // if (!daplink->auto_connect()) {
+                //     setRunning(false);
+                //     continue;
+                // }
+                daplink->resetMap(pluginContainer);
+                clock.reset();
+                started = true;
             }
 
+
             auto runTime = clock.runTime()/1000.0;
+            daplink->updateVari(pluginContainer);
 
             updatePlugin(runTime);
 
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     });
+}
+
+bool Backend::connect() {
+    if (daplink->auto_connect()) {
+
+        daplink->attach_to_target();
+        daplink->auto_configure_ap();
+
+        connected = true;
+        emit connectedChanged();
+    }
+    return connected;
+}
+
+void Backend::disconnect() {
+    if (running==true) {
+        sync.sendRequest([this](){setRunning(false);});
+    }
+    daplink->disconnect();
+    connected = false;
+    emit connectedChanged();
 }
 
 void Backend::requestHandler() {
