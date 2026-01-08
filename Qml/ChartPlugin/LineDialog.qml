@@ -6,7 +6,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtQuick. Dialogs
+import QtQuick.Dialogs
 import FluentUI
 
 FluWindow {
@@ -102,7 +102,7 @@ FluWindow {
                 }
                 // 曲线颜色
                 ColumnLayout {
-                    Layout. fillWidth: true
+                    Layout.fillWidth: true
                     spacing: 8
                     FluText {
                         text: qsTr("曲线颜色")
@@ -116,7 +116,7 @@ FluWindow {
                             width: 80
                             height: 40
                             color: dialog.editColor
-                            border.color: FluTheme. dark ? "#666" : "#ccc"
+                            border.color: FluTheme.dark ? "#666" : "#ccc"
                             border.width: 2
                             radius: 6
                             FluText {
@@ -128,7 +128,7 @@ FluWindow {
                                     var c = dialog.editColor
                                     var r = c.r * 255
                                     var g = c.g * 255
-                                    var b = c. b * 255
+                                    var b = c.b * 255
                                     var brightness = (r * 299 + g * 587 + b * 114) / 1000
                                     return brightness > 128 ? "#000" : "#fff"
                                 }
@@ -169,7 +169,7 @@ FluWindow {
                                     color: {
                                         var c = Qt.color(modelData)
                                         var r = c.r * 255
-                                        var g = c. g * 255
+                                        var g = c.g * 255
                                         var b = c.b * 255
                                         var brightness = (r * 299 + g * 587 + b * 114) / 1000
                                         return brightness > 128 ? "#000" : "#fff"
@@ -215,7 +215,7 @@ FluWindow {
                             font.pixelSize: 14
                             font.bold: true
                             Layout.preferredWidth: 80
-                            color: dialog.running ? FluColors.Orange. normal : FluTheme.fontPrimaryColor
+                            color: dialog.running ? FluColors.Orange.normal : FluTheme.fontPrimaryColor
                         }
                     }
 
@@ -224,7 +224,7 @@ FluWindow {
                         text: dialog.running ?
                             qsTr("⚠️ 修改缓冲区大小会清空历史数据"):
                             qsTr("⚠️ 请暂停数据采集后再修改缓冲区大小")
-                        font. pixelSize: 11
+                        font.pixelSize: 11
                         color: FluColors.Orange.normal
                         visible: true
                     }
@@ -237,7 +237,7 @@ FluWindow {
                 }
                 // 预览
                 ColumnLayout {
-                    Layout. fillWidth: true
+                    Layout.fillWidth: true
                     spacing: 8
                     FluText {
                         text: qsTr("预览效果")

@@ -145,7 +145,6 @@ void ExChartView::updatePath(qreal runTime) {
 void ExChartView::updateData(qreal runTime) {
     int index = 0;
     for (auto & buf: *backBuf) {
-        // auto point = QPointF(runTime,(++index*10)+0.5*getViewYRange()+0.3*getViewYRange()*std::sin(runTime/300*2*std::numbers::pi));
         auto point = QPointF(runTime,variContainer[index]->fValue);
         buf.append(point);
     }
@@ -153,8 +152,6 @@ void ExChartView::updateData(qreal runTime) {
     if (runTime-lastUpdateTime>30 || runTime<lastUpdateTime) {
         switchBuf();
         emit timingUpdate(runTime);
-        // qDebug()<<"update "<<"xMin:"<<getViewXMin() << "xMax:"<<getViewXMax()
-        // <<"yMin:"<<getViewYMin()<<"yMax:"<<getViewYMax();
         lastUpdateTime = runTime;
     }
 }
@@ -202,4 +199,3 @@ void ExChartView::onAttrPushed(VariNode* node) {
     bufB.append(PointBuf{});
     pushUnit(node);
 }
-

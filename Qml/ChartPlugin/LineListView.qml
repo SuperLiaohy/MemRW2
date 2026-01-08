@@ -3,9 +3,6 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import FluentUI
 
-// the structure is two layers ListView, the fist View is for showing the groups, and the second View is for showing the lines
-// overall layout is ColumnLayout, each List View is paired with RowLayout header and rectangle separator
-// need
 FluFrame {
     id: frame
     padding: 8
@@ -97,12 +94,12 @@ FluFrame {
                         spacing: 4
                         FluText {
                             text: model.name
-                            font. pixelSize: 13
+                            font.pixelSize: 13
                             font.bold: true
                         }
                         FluText {
                             text: qsTr("数据:  ") + model.capacity + qsTr(" 点")
-                            font. pixelSize: 10
+                            font.pixelSize: 10
                             color: FluTheme.dark ? "#888" : "#666"
                         }
                         FluText {
@@ -119,10 +116,7 @@ FluFrame {
                     FluCheckBox {
                         checked: true
                         onCheckedChanged: {
-                            // checked = !checked
                             model.visible = checked
-                            // ChartLineManager.setLineVisible(modelData, checked)
-                            // updatePath()
                         }
                     }
                     FluIconButton {

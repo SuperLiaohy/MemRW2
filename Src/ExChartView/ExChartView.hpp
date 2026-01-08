@@ -49,12 +49,12 @@ public:
     std::atomic<QVector<PointBuf>*> backBuf;
     std::atomic<QVector<PointBuf>*> frontBuf;
 
-    qreal getViewXMax(){ return viewXMax;}
-    qreal getViewXMin(){ return viewXMin;}
-    qreal getViewYMin(){ return viewYMin;}
-    qreal getViewYMax(){ return viewYMax;}
-    qreal getViewXRange(){ return viewXRange;}
-    qreal getViewYRange(){ return viewYRange;}
+    [[nodiscard]] qreal getViewXMax() const{ return viewXMax;}
+    [[nodiscard]] qreal getViewXMin() const{ return viewXMin;}
+    [[nodiscard]] qreal getViewYMin() const{ return viewYMin;}
+    [[nodiscard]] qreal getViewYMax() const{ return viewYMax;}
+    [[nodiscard]] qreal getViewXRange() const{ return viewXRange;}
+    [[nodiscard]] qreal getViewYRange() const{ return viewYRange;}
 
     void setViewXMax(qreal value){viewXMax = value; emit viewXMaxChanged();}
     void setViewXMin(qreal value){viewXMin = value; emit viewXMinChanged();}

@@ -14,7 +14,6 @@
 
 SerialDebugInterface DAPReader::sw;
 
-
 namespace {
     uint32_t DAP_INTERFACE_CLASS = 255;
 
@@ -173,19 +172,7 @@ void DAPReader::attach_to_target() {
 uint32_t DAPReader::read_mem(uint32_t addr) {
     DAP::TransferResponse response{};
     std::vector<DAP::TransferResponse> responses(2);
-    // this->transfer(APWriteRequest(SW::MEM_AP::TAR, addr), response);
-    // this->transfer(APReadRequest(SW::MEM_AP::DRW), response);
-    // if (sw.ap.csw->AddrInc == 0) {
-    //     if (sw.ap.tar.value_or(SW::MEM_AP::TARReg(0)).data != addr) {
-    //         this->transfer({APWriteRequest(SW::MEM_AP::TAR, addr), APReadRequest(SW::MEM_AP::DRW)}, responses);
-    //         sw.ap.tar = std::make_optional<SW::MEM_AP::TARReg>(addr);
-    //         return responses[1].data;
-    //     }
-    //     this->transfer(APReadRequest(SW::MEM_AP::DRW), response);
-    //     return response.data;
-    // }
     this->transfer({APWriteRequest(SW::MEM_AP::TAR, addr), APReadRequest(SW::MEM_AP::DRW)}, responses);
-    // sw.ap.tar = std::make_optional<SW::MEM_AP::TARReg>(addr+4);
     return responses[1].bit_data.u32;
 }
 

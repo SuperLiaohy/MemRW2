@@ -47,7 +47,7 @@ FluWindow {
             // ==================== 图表区域 ====================
             ExChart {
                 id: chart
-                Layout. fillWidth: true
+                Layout.fillWidth: true
                 Layout.fillHeight: true
             }
         }

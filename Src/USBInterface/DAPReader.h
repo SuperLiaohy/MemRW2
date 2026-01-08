@@ -94,13 +94,6 @@ struct TransferResponse {
 #pragma pack(pop)
 }
 
-class AddrMap {
-public:
-
-private:
-};
-
-
 class DAPReader {
 public:
     DAPReader();
@@ -108,6 +101,7 @@ public:
 
     bool auto_connect();
     void disconnect();
+
     void attach_to_target();
     void auto_configure_ap();
     int dap_connect(uint8_t port);
@@ -121,23 +115,19 @@ public:
     int transfer(const DAP::TransferRequest &requests, DAP::TransferResponse &responses);
     int transfer(const std::vector<DAP::TransferRequest> &requests, std::vector<DAP::TransferResponse> &responses);
 
-    static DAP::TransferRequest Request(uint8_t APnDP, uint8_t RnW, uint8_t reg, uint8_t ValueMatch, uint8_t MatchMask,
-                                        uint8_t TimeStamp, uint32_t data);
+    static DAP::TransferRequest Request(uint8_t APnDP, uint8_t RnW, uint8_t reg, uint8_t ValueMatch, uint8_t MatchMask,uint8_t TimeStamp, uint32_t data);
     static DAP::TransferRequest
     APWriteRequest(uint8_t reg, uint32_t data, uint8_t TimeStamp = 0, uint8_t MatchMask = 0) {
         return Request(1, 0, reg, 0, MatchMask, TimeStamp, data);
     }
-    static DAP::TransferRequest APReadRequest(uint8_t reg, uint32_t data = 0, uint8_t TimeStamp = 0,
-                                              uint8_t ValueMatch = 0) {
+    static DAP::TransferRequest APReadRequest(uint8_t reg, uint32_t data = 0, uint8_t TimeStamp = 0,uint8_t ValueMatch = 0) {
         return Request(1, 1, reg, ValueMatch, 0, TimeStamp, data);
     }
-
     static DAP::TransferRequest
     DPWriteRequest(uint8_t reg, uint32_t data, uint8_t TimeStamp = 0, uint8_t MatchMask = 0) {
         return Request(0, 0, reg, 0, MatchMask, TimeStamp, data);
     }
-    static DAP::TransferRequest DPReadRequest(uint8_t reg, uint32_t data = 0, uint8_t TimeStamp = 0,
-                                              uint8_t ValueMatch = 0) {
+    static DAP::TransferRequest DPReadRequest(uint8_t reg, uint32_t data = 0, uint8_t TimeStamp = 0,uint8_t ValueMatch = 0) {
         return Request(0, 1, reg, ValueMatch, 0, TimeStamp, data);
     }
 
@@ -155,9 +145,6 @@ private:
     std::vector<uint8_t> response_buffer;
 
     std::multimap<std::size_t,VariComponent*> addrMap;
-    // std::vector<std::uint32_t> mapResponseBuf;
     std::vector<std::uint8_t> mapRequestBuf;
     std::size_t requestCount;
-
-    // std::vector<DAP::TransferRequest> mapRequests;
 };

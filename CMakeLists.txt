@@ -19,14 +19,13 @@ qt_add_qml_module(MemRW
         QML_FILES
         Qml/Main.qml
         Qml/VariWindow.qml
-        Qml/LineDialog.qml
+        Qml/ControlBar.qml
+        Qml/StateBar.qml
 
-        Qml/Module/ExChart.qml
-        Qml/Module/ControlBar.qml
-        Qml/Module/LineListView.qml
-        Qml/Module/StateBar.qml
-        Qml/Module/TimeAxisControlBar.qml
-        Qml/Module/ValueAxisControlBar.qml
+        Qml/ChartPlugin/LineDialog.qml
+        Qml/ChartPlugin/ExChart.qml
+        Qml/ChartPlugin/LineListView.qml
+
         SOURCES
         Src/Variable/TreeModel.cpp Src/Variable/TreeModel.hpp
         Src/Variable/GetVariTree.cpp Src/Variable/GetVariTree.hpp
@@ -38,8 +37,7 @@ qt_add_qml_module(MemRW
         Src/Backend/DisplayPluginInterface.cpp Src/Backend/DisplayPluginInterface.hpp
         Src/USBInterface/DAPReader.cpp Src/USBInterface/DAPReader.h
         Src/USBInterface/USBBulk.cpp Src/USBInterface/USBBulk.h
-        Src/USBInterface/USBDevDesc.cpp Src/USBInterface/USBDevDesc.h
-        Src/USBInterface/main_task.cpp Src/USBInterface/SWReg.h
+        Src/USBInterface/USBDevDesc.cpp Src/USBInterface/USBDevDesc.h Src/USBInterface/SWReg.h
 #        Src/Backend/DisplayPlugin.cpp Src/Backend/DisplayPluginInterface.hpp
 )
 

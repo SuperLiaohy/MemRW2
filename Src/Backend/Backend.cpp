@@ -9,7 +9,6 @@
 
 void Backend::init() {
     samplingWorker = std::jthread([this](const std::stop_token& stoken) {
-        // std::unique_ptr<DAPReader> daplink = std::make_unique<DAPReader>();
         bool started = false;
         clock.reset();
         while (!stoken.stop_requested()) {
@@ -20,15 +19,10 @@ void Backend::init() {
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 continue;
             } else if (started == false) {
-                // if (!daplink->auto_connect()) {
-                //     setRunning(false);
-                //     continue;
-                // }
                 daplink->resetMap(pluginContainer);
                 clock.reset();
                 started = true;
             }
-
 
             auto runTime = clock.runTime()/1000.0;
             daplink->updateVari(pluginContainer);

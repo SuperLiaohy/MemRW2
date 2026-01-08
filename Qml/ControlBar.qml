@@ -24,12 +24,6 @@ FluFrame {
                     Backend.disconnect()
                     showSuccess("disconnection")
                 }
-                // if (Backend.running) {
-                //     console.log("=== connected ===")
-                // } else {
-                //     console.log("=== disconnect ===")
-                // }
-                // Backend.running=!Backend.running
             }
         }
         FluFilledButton {
@@ -69,7 +63,7 @@ FluFrame {
                 frame.showLineList = !frame.showLineList
             }
         }
-        Rectangle { width: 1; Layout. fillHeight: true; color: FluTheme.dark ? "#444" : "#ddd" }
+        Rectangle { width: 1; Layout.fillHeight: true; color: FluTheme.dark ? "#444" : "#ddd" }
         FluText { text: "FPS:" }
         FluSlider {
             from: 1; to: 60

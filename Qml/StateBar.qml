@@ -24,7 +24,7 @@ FluFrame {
         spacing: 12
         FluText {
             text: frame.running ? qsTr("● 采集中") : qsTr("○ 已暂停")
-            color: frame.running ? FluColors. Green.normal : FluColors. Orange.normal
+            color: frame.running ? FluColors.Green.normal : FluColors.Orange.normal
             font.bold: true
         }
         Rectangle { width: 1; height: 25; color: FluTheme.dark ? "#444" : "#ddd" }
