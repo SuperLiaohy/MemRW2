@@ -32,7 +32,11 @@ FluWindow {
     property string editName: ""
     property color editColor: "#409EFF"
     property int editBufferSize: 5000
-    property var modelNode: null
+    // temp show
+    property string variName: ""
+    property int variAddr: 0
+    property string variType: ""
+    property int variSize: 0
 
     // ⭐ 预设颜色
     property var presetColors: [
@@ -50,7 +54,12 @@ FluWindow {
             mode = openMode
             visible = true
             lineAttrModel = model;
-            modelNode = object.self;
+
+            variName = object.display
+            variType = object.type
+            variSize = object.size
+            variAddr = object.addr
+
         } else if (openMode===LineDialog.OpenMode.Change) {
             editName = object.name
             editColor = object.color
@@ -60,6 +69,11 @@ FluWindow {
             mode = openMode
             visible = true
             lineAttrModel = model;
+
+            variName = object.variName
+            variType = object.variType
+            variAddr = object.variAddr
+            variSize = object.variSize
         }
     }
 
@@ -77,6 +91,31 @@ FluWindow {
             ColumnLayout {
                 width: parent.width
                 spacing: 20
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+                    FluText {
+                        text: qsTr("变量名称: ") + dialog.variName
+                        font.pixelSize: 14
+                        font.bold: true
+                    }
+                    FluText {
+                        text: qsTr("变量类型: ") + dialog.variType
+                        font.pixelSize: 14
+                        font.bold: true
+                    }
+                    FluText {
+                        text: qsTr("变量地址: ") + dialog.variAddr
+                        font.pixelSize: 14
+                        font.bold: true
+                    }
+                    FluText {
+                        text: qsTr("变量打小: ") + dialog.variSize
+                        font.pixelSize: 14
+                        font.bold: true
+                    }
+                }
 
                 // 曲线名称
                 ColumnLayout {
@@ -316,7 +355,7 @@ FluWindow {
                         modelObject.color = dialog.editColor
                         modelObject.capacity = dialog.editBufferSize
                     } else if (dialog.mode===LineDialog.OpenMode.Add) {
-                        dialog.lineAttrModel.appendLine(dialog.editName, dialog.editColor, dialog.editBufferSize, modelNode);
+                        dialog.lineAttrModel.appendLine(dialog.editName, dialog.editColor, dialog.editBufferSize, variName,variType,variAddr,variSize);
                         showSuccess("Add Succeed "+dialog.editName)
                     }
                     console.log("=== Properties saved ===")

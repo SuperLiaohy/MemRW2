@@ -10,11 +10,11 @@ FluFrame {
     // expose to control
     property bool showLineList: true
     property bool showCrosshair: false
-    property int targetFps: 0
+    property int targetFps: 30
 
     // expose to show
-    property int fps: 0
     property int lineCount: 0
+    required property int realFps
     required property bool running
     required property real viewXMin
     required property real viewXMax
@@ -40,7 +40,7 @@ FluFrame {
         Rectangle { width: 1; Layout.fillHeight: true; color: FluTheme.dark ? "#444" : "#ddd" }
         FluText { text: "Target FPS:" }
         FluSlider {
-            from: 1; to: 60
+            from: 15; to: 80
             value: frame.targetFps
             stepSize: 1
             Layout.preferredWidth: 50
@@ -104,7 +104,7 @@ FluFrame {
         Rectangle { width: 1; height: 25; color: FluTheme.dark ? "#444" : "#ddd" }
         FluText {
             id: fpsText
-            text: "FPS: " + fps
+            text: "FPS: " + frame.realFps
             color: FluColors.Green.normal
             font.bold: true
         }

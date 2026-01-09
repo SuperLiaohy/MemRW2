@@ -11,6 +11,8 @@ void Backend::init() {
     samplingWorker = std::jthread([this](const std::stop_token& stoken) {
         bool started = false;
         clock.reset();
+        std::size_t fps = 0;
+        std::size_t everyFrame = 0;
         while (!stoken.stop_requested()) {
             requestHandler();
 
@@ -27,6 +29,13 @@ void Backend::init() {
 
             auto runTime = clock.runTime()/1000.0;
             daplink->updateVari(pluginContainer);
+            ++fps;
+            if (runTime-everyFrame>1000) {
+                everyFrame=runTime;
+                std::cout << "fps: " <<fps<<std::endl;
+                fps=0;
+            }
+
 
             updatePlugin(runTime);
 

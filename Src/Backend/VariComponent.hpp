@@ -12,12 +12,14 @@ class VariComponent {
 public:
     enum class Type { INT8, UINT8, INT16, UINT16, INT32, UINT32, INT64, UINT64, FLOAT, DOUBLE};
 
-    VariComponent(VariNode* info);
+    VariComponent(const QString&name , const QString& type, std::size_t address, std::size_t size);
 
-    [[nodiscard]] const std::string& getName() const {return name;}
+    [[nodiscard]] const QString& getName() const {return name;}
     [[nodiscard]] std::size_t getSize() const {return size;}
     [[nodiscard]] Type getType() const {return type;}
     [[nodiscard]] std::size_t getAddress() const {return address;}
+
+    [[nodiscard]] QString getTypeName() const;
 
     qreal fValue;
     union {
@@ -35,8 +37,10 @@ public:
         double f64;
     } value;
 private:
+    Type getTypeFromString(const QString& type_name);
+
     bool active;
-    std::string name;
+    QString name;
     std::size_t size;
     Type type;
     std::size_t address;

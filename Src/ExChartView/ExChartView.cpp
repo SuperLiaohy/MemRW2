@@ -3,8 +3,10 @@
 //
 
 #include <QSGGeometryNode>
+#include <QSGGeometry>
 #include <QSGFlatColorMaterial>
 #include <QtAlgorithms>
+#include <QTimer>
 #include "ExChartView.hpp"
 #include "Backend.hpp"
 #include "VariComponent.hpp"
@@ -24,22 +26,63 @@ QPointF ExLine::at(quint32 index) const {
     return buf[(writeHandle + index) % capacity];
 }
 
+std::pair<std::size_t, std::size_t> ExLine::findBoundary(qreal viewXMin, qreal viewXMax) {
+    if (len==0) {return {0,0};}
+    if (at(len-1).x()<viewXMin) {return{len-1,len-1};}
+    if (at(0).x()>viewXMax) {return{0,0};}
+
+    std::size_t lowBound = 0;
+    std::size_t highBound = len;
+
+    if (at(0).x()<viewXMin) {
+        std::size_t low = 0, high = len;
+        while (low < high) {
+            std::size_t mid = low + (high - low) / 2;
+            if (at(mid).x() < viewXMin) {
+                low = mid + 1;
+            } else {
+                high = mid;
+            }
+        }
+        lowBound = low;
+    }
+    if (at(len-1).x()>viewXMax) {
+        std::size_t low = 0, high = len;
+        while (low < high) {
+            std::size_t mid = low + (high - low) / 2;
+            if (at(mid).x() <= viewXMax) {
+                low = mid + 1;
+            } else {
+                high = mid;
+            }
+        }
+        highBound = low;
+    }
+    if (lowBound > highBound) {
+        return {0, 0};
+    }
+    return {lowBound,highBound};
+}
+
+std::size_t ExLine::findPointIndex(qreal x) {
+}
+
 ExChartView::ExChartView(QQuickItem *parent) : QQuickItem(parent), lineAttrModel(new LineAttrModel(this)), backBuf(&bufA) {
     setFlag(QQuickItem::ItemHasContents, true);
+
+    for (auto & buf: bufA) {
+        buf.reserve(256);
+    }
+    for (auto & buf: bufB) {
+        buf.reserve(256);
+    }
+
     connect(this,&ExChartView::timingUpdate,this,&ExChartView::updatePath);
     connect(lineAttrModel, &LineAttrModel::dataChanged, this,&ExChartView::onAttrChanged);
-    // connect(lineAttrModel, &LineAttrModel::rowsInserted,this,[this](const QModelIndex &parent, int first, int last) {
-    //     for (int i = 0; i < last-first+1; ++i) {
-    //         lines.append(ExLine{lineAttrModel->lineAttrs[first+i]->config.capacity});
-    //         bufA.append(PointBuf{});
-    //         bufB.append(PointBuf{});
-    //     }
-    // });
-    // connect(lineAttrModel, &LineAttrModel::rowsRemoved,this,[this](const QModelIndex &parent, int first, int last) {
-    //     for (int i = first; i <=last; ++i) {lines[i].deleteLater = true;}
-    //     update();
-    // });
-    // connect(lineAttrModel, &LineAttrModel::modelReset,this,[](){});
+    QTimer* timer = new QTimer(this);
+    timer->setInterval(1000);
+    connect(timer,&QTimer::timeout,this,[this](){realFps=frameCount;frameCount=0;emit realFpsChanged();});
+    timer->start();
 }
 
 ExChartView::~ExChartView() {
@@ -48,6 +91,7 @@ ExChartView::~ExChartView() {
 
 QSGNode * ExChartView::updatePaintNode(QSGNode *qsg_node, UpdatePaintNodeData *update_paint_node_data) {
     qDebug()<<"paint";
+    ++frameCount;
     QSGNode* root = qsg_node?qsg_node:new QSGNode;
     QSGGeometryNode* node = nullptr;    QSGGeometry *geom = nullptr;
     QSet<int> deleteIndexes;
@@ -78,11 +122,16 @@ QSGNode * ExChartView::updatePaintNode(QSGNode *qsg_node, UpdatePaintNodeData *u
             eraseUnits(deleteIndexes);
         });
     }
+    std::size_t lowBound=0,highBound=0,range=0;
     for (int i = 0; i < lines.size(); ++i) {
         node = static_cast<QSGGeometryNode *>(root->childAtIndex(i));
+        std::tie(lowBound,highBound) = lines[i].findBoundary(viewXMin,viewXMax);
+        range = highBound-lowBound;
         if (!node) {
             node = new QSGGeometryNode;
-            geom = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), lines[i].getLen());
+            geom = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), lines[i].getCapacity());
+            geom->setVertexDataPattern(QSGGeometry::StreamPattern);
+            geom->setVertexCount(range);
             geom->setDrawingMode(QSGGeometry::DrawLineStrip);
             geom->setLineWidth(3.0);
             node->setGeometry(geom);
@@ -91,13 +140,12 @@ QSGNode * ExChartView::updatePaintNode(QSGNode *qsg_node, UpdatePaintNodeData *u
             mat->setColor(lineAttrModel->lineAttrs[i]->config.color);
             node->setMaterial(mat);
             node->setFlag(QSGNode::OwnsMaterial);
-
             root->appendChildNode(node);
         } else {
             geom = node->geometry();
             auto mat = static_cast<QSGFlatColorMaterial *>(node->material());
             mat->setColor(lineAttrModel->lineAttrs[i]->config.color);
-            if (geom->vertexCount() != lines[i].getLen()) geom->allocate(lines[i].getLen());
+            if (geom->vertexCount() != range) geom->setVertexCount(range);
         }
 
         if (lineAttrModel->lineAttrs[i]->config.visible) {
@@ -107,10 +155,10 @@ QSGNode * ExChartView::updatePaintNode(QSGNode *qsg_node, UpdatePaintNodeData *u
             auto yRange = viewYMax - viewYMin;
             auto w = width();
             auto h = height();
-            for (int j = 0; j < lines[i].getLen(); ++j) {
+            for (std::size_t j = lowBound; j < highBound; ++j) {
                 auto x = (lines[i].at(j).x() - viewXMin)/xRange*w;
                 auto y = (viewYMax - lines[i].at(j).y())/yRange*h;
-                v[j].set(x,y);
+                v[j-lowBound].set(x,y);
             }
         } else {
             node->setInheritedOpacity(0);
@@ -145,11 +193,10 @@ void ExChartView::updatePath(qreal runTime) {
 void ExChartView::updateData(qreal runTime) {
     int index = 0;
     for (auto & buf: *backBuf) {
-        auto point = QPointF(runTime,variContainer[index]->fValue);
+        auto point = QPointF(runTime,variContainer[index++]->fValue);
         buf.append(point);
     }
-
-    if (runTime-lastUpdateTime>30 || runTime<lastUpdateTime) {
+    if (runTime-lastUpdateTime>(1000/targetFps) || runTime<lastUpdateTime) {
         switchBuf();
         emit timingUpdate(runTime);
         lastUpdateTime = runTime;
@@ -203,9 +250,9 @@ void ExChartView::onAttrRemoved(int index) {
     update();
 }
 
-void ExChartView::onAttrPushed(VariNode* node) {
+void ExChartView::onAttrPushed(const QString&name , const QString& type, std::size_t address, std::size_t size) {
     lines.append(ExLine{lineAttrModel->lineAttrs.last()->config.capacity});
     bufA.append(PointBuf{});
     bufB.append(PointBuf{});
-    pushUnit(node);
+    pushUnit(name ,type, address, size);
 }

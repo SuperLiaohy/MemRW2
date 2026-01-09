@@ -9,6 +9,8 @@ FluFrame {
 
     // expose
     property alias lineAttrModel: chartView.lineAttrModel
+    property alias targetFps: chartView.targetFps
+    property alias realFps: chartView.realFps
     property alias viewXMax: chartView.viewXMax
     property alias viewXMin: chartView.viewXMin
     property alias viewYMin: chartView.viewYMin

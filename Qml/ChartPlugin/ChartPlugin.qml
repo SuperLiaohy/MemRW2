@@ -19,6 +19,7 @@ FluFrame {
             viewXMax: chart.viewXMax
             viewYMin: chart.viewYMin
             viewYMax: chart.viewYMax
+            realFps: chart.realFps
         }
         RowLayout {
             Layout.fillWidth: true
@@ -33,6 +34,7 @@ FluFrame {
                 id: chart
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                targetFps: chartBar.targetFps
             }
         }
     }

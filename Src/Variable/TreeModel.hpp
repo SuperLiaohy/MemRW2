@@ -14,7 +14,9 @@ class TreeModel : public QAbstractItemModel
 public:
     Q_DISABLE_COPY_MOVE(TreeModel)
     enum RoleNames {
-        SelfRole = Qt::UserRole + 1,
+        TypeRole = Qt::UserRole + 1,
+        SizeRole,
+        AddrRole,
     };
     explicit TreeModel(const std::shared_ptr<VariTree> &header, QObject *parent = nullptr);
     ~TreeModel() override;

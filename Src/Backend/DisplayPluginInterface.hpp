@@ -18,7 +18,7 @@ public:
     virtual void updateData(qreal runTime) = 0;
     virtual void clearData() = 0;
 
-    void pushUnit(VariNode* node);
+    void pushUnit(const QString&name , const QString& type, std::size_t address, std::size_t size);
     void eraseUnit(int index);
     void eraseUnits(QSet<int>& indexes);
 

@@ -19,19 +19,24 @@ TreeModel::~TreeModel() {
 
 QHash<int, QByteArray> TreeModel::roleNames() const {
     return {
-            { Qt::DisplayRole, "display" },
-            {SelfRole, "self"},
-        };
+        {Qt::DisplayRole, "display"},
+        {TypeRole, "type"},
+        {SizeRole, "size"},
+        {AddrRole, "addr"},
+    };
 }
 
 QVariant TreeModel::data(const QModelIndex &index, int role) const {
     if (!index.isValid()) return QVariant();
+    auto item = static_cast<VariNode *>(index.internalPointer());
     if (role == Qt::DisplayRole) {
-        auto item = static_cast<VariNode *>(index.internalPointer());
         return QString::fromStdString(item->data(index.column()));
-    } else if (role == SelfRole) {
-        auto item = static_cast<VariNode *>(index.internalPointer());
-        return QVariant::fromValue(item);
+    } else if (role == TypeRole) {
+        return item->getType().data();
+    } else if (role == AddrRole) {
+        return static_cast<qulonglong>(item->getAbsolute());
+    } else if (role == SizeRole) {
+        return static_cast<qulonglong>(item->getSize());
     }
     return QVariant();
 }

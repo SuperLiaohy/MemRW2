@@ -14,8 +14,8 @@ DisplayPluginInterface::~DisplayPluginInterface() {
     Backend::instance().erasePlugin(this);
 }
 
-void DisplayPluginInterface::pushUnit(VariNode* node) {
-    auto vari = std::make_shared<VariComponent>(node);
+void DisplayPluginInterface::pushUnit(const QString&name , const QString& type, std::size_t address, std::size_t size) {
+    auto vari = std::make_shared<VariComponent>(name,type,address,size);
     variContainer.push_back(vari);
 }
 
