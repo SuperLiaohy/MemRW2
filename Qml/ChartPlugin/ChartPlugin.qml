@@ -20,6 +20,11 @@ FluFrame {
             viewYMin: chart.viewYMin
             viewYMax: chart.viewYMax
             realFps: chart.realFps
+            mouseInChart: chart.mouseInChart
+            mouseXValue: chart.mouseXValue
+            mouseYValue: chart.mouseYValue
+
+            onResetClicked: chart.resetChart
         }
         RowLayout {
             Layout.fillWidth: true
@@ -35,6 +40,8 @@ FluFrame {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 targetFps: chartBar.targetFps
+                flow: chartBar.flow
+                running: Backend.running
             }
         }
     }

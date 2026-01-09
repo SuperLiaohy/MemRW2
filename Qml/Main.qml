@@ -7,8 +7,8 @@ import MemRWApp
 FluWindow {
     id:window
     title: "Vari"
-    width: 1200
-    height: 480
+    width: 1100
+    height: 700
     visible: true
     showStayTop: true
     fitsAppBarWindows: true
@@ -45,6 +45,8 @@ FluWindow {
     onHeightChanged: {
         if (sheet.height>sheet.maxSize)
             sheet.height = sheet.maxSize
+        console.log("height: ",height," width: ",width)
+
     }
     VariWindow {
         id:sheet

@@ -15,6 +15,13 @@ FluFrame {
     property alias viewXMin: chartView.viewXMin
     property alias viewYMin: chartView.viewYMin
     property alias viewYMax: chartView.viewYMax
+    property alias flow: chartView.flow
+    property alias mouseInChart: chartMouseArea.containsMouse
+    property alias mouseXValue: chartMouseArea.mouseXValue
+    property alias mouseYValue: chartMouseArea.mouseYValue
+
+    // need
+    required property bool running
 
     // internal variable
     property real dragStartY: 0
@@ -119,6 +126,10 @@ FluFrame {
             id: chartMouseArea
             anchors.fill: parent
             cursorShape: pressed?Qt.ClosedHandCursor:Qt.ArrowCursor
+            enabled: !(chartView.flow&&frame.running)
+            property real mouseXValue
+            property real mouseYValue
+            hoverEnabled: true
             onDoubleClicked: function (event) {
                 var yRange = chartView.viewYMax - chartView.viewYMin
                 var yCenter = chartView.viewYMax - event.y / height * yRange
@@ -141,6 +152,9 @@ FluFrame {
                 frame.dragStartYMax = chartView.viewYMax
             }
             onPositionChanged: function(event) {
+                let pt = pointToChart(mouseX,mouseY)
+                mouseXValue = pt.x
+                mouseYValue = pt.y
                 if (pressed) {
                     var Range = chartView.viewYMax - chartView.viewYMin
                     var deltaValue = (event.y - frame.dragStartY) / height * Range
@@ -211,6 +225,8 @@ FluFrame {
             id: xMouseArea
             anchors.fill: parent
             cursorShape: pressed?Qt.ClosedHandCursor:Qt.ArrowCursor
+            enabled: !(chartView.flow&&frame.running)
+
             onPressed: function(event) {
                 frame.dragStartX = event.x
                 frame.dragStartXMin = chartView.viewXMin
@@ -245,5 +261,106 @@ FluFrame {
         anchors.bottom: parent.bottom
         iconSource: FluentIcons.Settings
         iconSize: 15
+        onClicked: {
+            chartDialog.open()
+        }
+    }
+    FluContentDialog{
+        id: chartDialog
+        title: qsTr("Chart Edit")
+        width:250
+        property real editXRange
+        property real editXCenter
+        property real editYRange
+        property real editYCenter
+        contentDelegate: Component{
+            Item{
+                width: parent.width
+                implicitHeight: 150
+                ColumnLayout {
+                    anchors.fill: parent
+                    RowLayout {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.fillWidth: true
+                        FluText {
+                            text: "XRange"
+                        }
+                        FluSpinBox {
+                            editable: true
+                            from: 0
+                            to: 2147483647
+                            stepSize: 1
+                            value: chartView.viewXRange
+                            onValueChanged:{chartDialog.editXRange=value}
+                        }
+                    }
+                    RowLayout {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.fillWidth: true
+                        FluText {
+                            text: "XCenter"
+                        }
+                        FluSpinBox {
+                            editable: true
+                            from: -2147483647
+                            to: 2147483647
+                            stepSize: 1
+                            value: chartView.viewXCenter
+                            onValueChanged:{chartDialog.editXCenter=value}
+                        }
+                    }
+                    RowLayout {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.fillWidth: true
+                        FluText {
+                            text: "YRange"
+                        }
+                        FluSpinBox {
+                            editable: true
+                            from: 0
+                            to: 2147483647
+                            stepSize: 1
+                            value: chartView.viewYRange
+                            onValueChanged:{chartDialog.editYRange=value}
+                        }
+                    }
+                    RowLayout {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.fillWidth: true
+                        FluText {
+                            text: "YCenter"
+                        }
+                        FluSpinBox {
+                            editable: true
+                            from: -2147483647
+                            to: 2147483647
+                            stepSize: 1
+                            value: chartView.viewYCenter
+                            onValueChanged:{chartDialog.editYCenter=value}
+                        }
+                    }
+                }
+            }
+        }
+
+        onPositiveClicked: {
+            parent.forceActiveFocus()
+            chartView.viewXRange = chartDialog.editXRange
+            chartView.viewXCenter = chartDialog.editXCenter
+            chartView.viewYRange = chartDialog.editYRange
+            chartView.viewYCenter = chartDialog.editYCenter
+            showSuccess(qsTr("Save Settings"))
+        }
+    }
+
+    function resetChart() {
+        chartView.viewXMax = chartView.viewXCenter + chartView.viewXRange / 2
+        chartView.viewXMin = chartView.viewXCenter - chartView.viewXRange / 2
+        chartView.viewYMax = chartView.viewYCenter + chartView.viewYRange / 2
+        chartView.viewYMin = chartView.viewYCenter - chartView.viewYRange / 2
+    }
+    function pointToChart(xm,ym) {
+        return {x:chartView.viewXMin+xm/chartView.width*(chartView.viewXMax-chartView.viewXMin),
+            y:chartView.viewYMax-ym/chartView.height*(chartView.viewYMax-chartView.viewYMin)}
     }
 }

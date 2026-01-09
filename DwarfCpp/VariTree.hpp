@@ -26,6 +26,13 @@ public:
     void setSize(const std::size_t s)  {size = s;}
     void updateAbsolute();
 
+    VariNode* findChild(const std::string& childName) const {
+        for (auto child: children) {
+            if (child->getName()==childName) return child;
+        };
+        return nullptr;
+    }
+
     VariNode* getParent() const {return parent;}
     VariNode* getChild(std::size_t index) const {return children[index];}
     std::size_t getChildSize() const {return children.size();}
@@ -93,6 +100,7 @@ class VariTree : public VariNode {
 public:
     VariTree() : VariNode(nullptr) {}
     static std::unordered_map<std::string,std::shared_ptr<VariNode>> typeMap;
+
 
     static std::vector<std::string> context;
     static std::string contextStr() {

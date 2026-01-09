@@ -183,9 +183,11 @@ void ExChartView::updatePath(qreal runTime) {
         lineAttrModel->setData(lineAttrModel->index(i),lines[i].getLen(),LineAttrModel::RoleNames::BufLenRole);
         ready[i].clear();
     }
-    if (runTime>getViewXRange()) {
-        setViewXMax(runTime);
-        setViewXMin(runTime-getViewXRange());
+    if (flow) {
+        if (runTime>getViewXRange()) {
+            setViewXMax(runTime);
+            setViewXMin(runTime-getViewXRange());
+        }
     }
     update();
 }
@@ -207,10 +209,10 @@ void ExChartView::clearData() {
     for (auto & line: lines) {line.clear();}
     for (auto & buf: bufA) {buf.clear();}
     for (auto & buf: bufB) {buf.clear();}
-    setViewXMin(0);
-    setViewXMax(viewXRange);
-    setViewYMin(0);
-    setViewYMax(viewYRange);
+    setViewXMin(viewXCenter-viewXRange/2);
+    setViewXMax(viewXCenter+viewXRange/2);
+    setViewYMin(viewYCenter-viewYRange/2);
+    setViewYMax(viewYCenter+viewYRange/2);
 }
 
 void ExChartView::onAttrChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QList<int> &roles) {

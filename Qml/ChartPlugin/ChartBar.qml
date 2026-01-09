@@ -11,6 +11,8 @@ FluFrame {
     property bool showLineList: true
     property bool showCrosshair: false
     property int targetFps: 30
+    property alias flow: dragCheckedBox.checked
+    required property var onResetClicked
 
     // expose to show
     property int lineCount: 0
@@ -20,10 +22,10 @@ FluFrame {
     required property real viewXMax
     required property real viewYMin
     required property real viewYMax
+    required property bool mouseInChart
+    required property real mouseXValue
+    required property real mouseYValue
 
-    // internal variable
-    property bool mouseInChart: false
-    property point mousePoint: Qt.point(0,0)
 
     RowLayout {
         anchors.fill: parent
@@ -36,6 +38,12 @@ FluFrame {
             onClicked:  {
                 frame.showLineList = !frame.showLineList
             }
+        }
+        FluButton {
+            id: resetBtn
+            text: qsTr("恢复初始")
+            Layout.preferredWidth: 75
+            onClicked: frame.onResetClicked()
         }
         Rectangle { width: 1; Layout.fillHeight: true; color: FluTheme.dark ? "#444" : "#ddd" }
         FluText { text: "Target FPS:" }
@@ -52,6 +60,13 @@ FluFrame {
         FluText {
             text: frame.targetFps
             Layout.preferredWidth: 18
+        }
+        Rectangle { width: 1; Layout.fillHeight: true; color: FluTheme.dark ? "#444" : "#ddd" }
+        FluCheckBox{
+            id: dragCheckedBox
+            checked: true
+            text: "flow"
+            textRight: false
         }
         // FluText { text: "最大绘制:" }
         // FluSlider {
@@ -90,14 +105,12 @@ FluFrame {
         Rectangle { width: 1; height: 25; color: FluTheme.dark ? "#444" : "#ddd" }
         // ⭐ 鼠标位置显示相对时间
         FluText {
-            visible: frame.mouseInChart
-            text: "T: " + frame.mousePoint.x
+            text: "T: " + (frame.mouseInChart?frame.mouseXValue.toFixed(3):0)
             font.pixelSize: 11
             color: FluTheme.dark ? "#888" : "#666"
         }
         FluText {
-            visible: frame.mouseInChart
-            text: "V: " + frame.mousePoint.y
+            text: "V: " + (frame.mouseInChart?frame.mouseYValue.toFixed(3):0)
             font.pixelSize: 11
             color: FluColors.Blue.normal
         }

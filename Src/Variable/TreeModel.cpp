@@ -94,3 +94,27 @@ void TreeModel::setTreeData(const QUrl& path) {
     tree = getVariTree(path.path().toStdString());
     endResetModel();
 }
+
+QModelIndex TreeModel::findNode(const QString &nodeName) {
+    auto nodesName = nodeName.split('.');
+    qDebug()<<nodesName;
+    if (nodesName.isEmpty()) return QModelIndex();
+    VariNode* node = nullptr;
+    QModelIndex mIndex;
+    for (int i = 0; i < tree->getChildSize(); ++i) {
+        node = tree->getChild(i)->findChild(nodesName[0].toStdString());
+        if (node) {
+            mIndex = index(i,0);
+            mIndex = index(node->getIndex(),0,mIndex);
+            break;
+        }
+    }
+    if (!node) return QModelIndex();
+    qDebug()<<data(mIndex,Qt::DisplayRole);
+    for (int i = 1; i < nodesName.size(); ++i) {
+        node =  node->findChild(nodesName[i].toStdString());
+        if (node) mIndex =  index(node->getIndex(),0,mIndex); else return QModelIndex();
+    }
+    qDebug()<<data(mIndex,Qt::DisplayRole);
+    return mIndex;
+}

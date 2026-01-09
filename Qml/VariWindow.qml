@@ -1,6 +1,6 @@
-import QtCore
 import QtQuick
-import QtQuick.Controls.FluentWinUI3
+import QtQuick.Controls
+import QtQuick.Layouts
 import QtQuick.Dialogs
 import FluentUI
 
@@ -53,25 +53,67 @@ FluSheet {
         }
     }
 
-    // visible: false
-    ToolBar {
+    RowLayout {
         id: toolBar
+        anchors.top: dragHandle.bottom
+        anchors.topMargin: 10
         FluButton {
             id: loadBtn
-            anchors.verticalCenter: parent.verticalCenter
-            text: "选择文件..."
+            text: qsTr("选择文件")
             onClicked: {
                 fileDialog.open()
             }
         }
         FluText {
+            Layout.fillWidth: true
             x: loadBtn.width + 20
-            anchors.verticalCenter: parent.verticalCenter
             id: fileText
             text: "";
         }
     }
-
+    RowLayout {
+        id: customAdd
+        anchors.top: toolBar.bottom
+        width: parent.width
+        height: 45
+        FluText {
+            text: "Quick variable addition: "
+        }
+        TextField {
+            id: vari
+            Layout.fillWidth: true
+            placeholderText: "Input variable"
+            Keys.onPressed: (event)=> {
+                if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                    customAdd.search()
+                }
+            }
+        }
+        FluIconButton {
+            Layout.rightMargin: 10
+            iconSource: FluentIcons.ReturnKey
+            onClicked: customAdd.search()
+        }
+        function search() {
+            console.log(vari.text)
+            var idx = myTreeModel.findNode(vari.text)
+            if (!idx || !idx.valid) {
+                showError("Cannot find the variable")
+                return
+            }
+            treeView.expandToIndex(idx)
+            Qt.callLater(function() {
+                treeView.forceLayout()
+                let row = treeView.rowAtIndex(idx)
+                if (row >= 0) {
+                    treeView.selectionModel.setCurrentIndex(idx, ItemSelectionModel.ClearAndSelect)
+                    treeView.positionViewAtRow(row, Qt.AlignVCenter)
+                }
+            })
+            parent.forceActiveFocus()
+            showSuccess("Successfully found the variable")
+        }
+    }
     function minItemWidth(column) {
         if (column===0) {
             return (sheet.width)/2
@@ -84,7 +126,7 @@ FluSheet {
     HorizontalHeaderView {
         id: header
         syncView: treeView
-        anchors.top: toolBar.bottom
+        anchors.top: customAdd.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         clip: true
@@ -125,7 +167,10 @@ FluSheet {
         anchors.right: parent.right
         model: myTreeModel
         clip: true
-        selectionModel: ItemSelectionModel {}
+        selectionModel: ItemSelectionModel {
+            id: selModel
+            model: treeView.model
+        }
 
         delegate: Item {
             // implicitWidth: Math.max(
@@ -249,7 +294,6 @@ FluSheet {
 
     FileDialog {
         id: fileDialog
-        currentFolder: StandardPaths.standardLocations(StandardPaths.PicturesLocation)[0]
         nameFilters: ["dwarf files [*.elf *.axf] (*.elf *.axf)", "all files [*.*] (*.*)"]
 
         onAccepted: {
@@ -259,8 +303,7 @@ FluSheet {
             myTreeModel.setTreeData(selectedFile);
         }
     }
-
-    function openToAppend(f) {
+    function openAppendNode(f) {
         sheet.appendAction = f;
         open(FluSheetType.Bottom)
     }

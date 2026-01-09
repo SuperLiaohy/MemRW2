@@ -41,9 +41,13 @@ class ExChartView : public QQuickItem, public DisplayPluginInterface {
 
     Q_PROPERTY(qreal viewXRange READ getViewXRange WRITE setViewXRange NOTIFY viewXRangeChanged)
     Q_PROPERTY(qreal viewYRange READ getViewYRange WRITE setViewYRange NOTIFY viewYRangeChanged)
+    Q_PROPERTY(qreal viewXCenter READ getViewXCenter WRITE setViewXCenter NOTIFY viewXCenterChanged)
+    Q_PROPERTY(qreal viewYCenter READ getViewYCenter WRITE setViewYCenter NOTIFY viewYCenterChanged)
 
     Q_PROPERTY(quint32 targetFps READ getTargetFps WRITE setTargetFps NOTIFY targetFpsChanged)
     Q_PROPERTY(quint32 realFps READ getRealFps NOTIFY realFpsChanged)
+
+    Q_PROPERTY(bool flow READ getFlow WRITE setFlow NOTIFY flowChanged)
 
 public:
     explicit ExChartView(QQuickItem* parent = nullptr);
@@ -63,8 +67,11 @@ public:
     [[nodiscard]] qreal getViewYMax() const{ return viewYMax;}
     [[nodiscard]] qreal getViewXRange() const{ return viewXRange;}
     [[nodiscard]] qreal getViewYRange() const{ return viewYRange;}
+    [[nodiscard]] qreal getViewXCenter() const{ return viewXCenter;}
+    [[nodiscard]] qreal getViewYCenter() const{ return viewYCenter;}
     [[nodiscard]] quint32 getTargetFps() const{ return targetFps;}
     [[nodiscard]] quint32 getRealFps() const{ return realFps;}
+    [[nodiscard]] bool getFlow() const{ return flow;}
 
     void setViewXMax(qreal value){viewXMax = value; emit viewXMaxChanged();}
     void setViewXMin(qreal value){viewXMin = value; emit viewXMinChanged();}
@@ -72,7 +79,10 @@ public:
     void setViewYMax(qreal value){viewYMax = value; emit viewYMaxChanged();}
     void setViewXRange(qreal range){ viewXRange = range; emit viewXRangeChanged();}
     void setViewYRange(qreal range){ viewYRange = range; emit viewYRangeChanged();}
+    void setViewXCenter(qreal value){ viewXCenter = value; emit viewXCenterChanged();}
+    void setViewYCenter(qreal value){ viewYCenter = value; emit viewYCenterChanged();}
     void setTargetFps(quint32 fps){ targetFps = fps; emit targetFpsChanged();}
+    void setFlow(bool isFlow){ flow = isFlow; emit flowChanged();}
 
     void onAttrChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight,const QList<int> &roles);
     void onAttrRemoved(int index);
@@ -85,21 +95,27 @@ signals:
     void viewYMaxChanged();
     void viewXRangeChanged();
     void viewYRangeChanged();
+    void viewXCenterChanged();
+    void viewYCenterChanged();
     void targetFpsChanged();
     void realFpsChanged();
+    void flowChanged();
     void timingUpdate(qreal runTime);
 private:
     qreal viewXRange = 5000;
-    qreal viewYRange = 100;
+    qreal viewYRange = 1000;
+    qreal viewXCenter = 2500;
+    qreal viewYCenter = 0;
 
-    qreal viewXMax = viewXRange;
-    qreal viewXMin = 0;
-    qreal viewYMax = viewYRange;
-    qreal viewYMin = 0;
+    qreal viewXMax = viewXCenter + viewXRange / 2;
+    qreal viewXMin = viewXCenter - viewXRange / 2;
+    qreal viewYMax = viewYCenter + viewYRange / 2;
+    qreal viewYMin = viewYCenter - viewYRange / 2;
 
     quint32 targetFps;
     quint32 frameCount=0;
     quint32 realFps=0;
+    bool flow = true;
 
     QVector<ExLine> lines;
     LineAttrModel* lineAttrModel;

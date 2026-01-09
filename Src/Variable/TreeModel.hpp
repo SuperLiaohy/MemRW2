@@ -33,6 +33,7 @@ public:
     int columnCount(const QModelIndex &parent = {}) const override;
 
     Q_INVOKABLE void setTreeData(const QUrl& path);
+    Q_INVOKABLE QModelIndex findNode(const QString& nodeName);
 private:
     std::shared_ptr<VariTree> tree;
 };

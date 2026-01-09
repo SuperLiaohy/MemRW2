@@ -31,7 +31,7 @@ FluFrame {
                     anchors.fill: parent
                     onClicked: function (event) {
                         event.accepted = true
-                        sheet.openToAppend(frame.appendAction)
+                        sheet.openAppendNode(frame.appendAction)
                     }
                 }
             }
@@ -56,7 +56,7 @@ FluFrame {
             clip: true
             delegate: Rectangle {
                 id: delegateRoot
-                width: parent ? parent.width - 10 : 0
+                width: parent ? parent.width : 0
                 height: 70
                 radius: 4
                 border.color: FluTheme.dark ? "#444" : "#ddd"
@@ -76,7 +76,7 @@ FluFrame {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        dialogLoader.open(frame.lineAttrModel,model,LineDialog.OpenMode.Change)
+                        chartLineDialog.openWithMode(frame.lineAttrModel,model,LineDialog.OpenMode.Change)
                     }
                 }
                 RowLayout {
@@ -148,29 +148,12 @@ FluFrame {
         }
     }
     function appendAction(modelNode) {
-        dialogLoader.open(frame.lineAttrModel,modelNode,LineDialog.OpenMode.Add)
+        chartLineDialog.openWithMode(frame.lineAttrModel,modelNode,LineDialog.OpenMode.Add)
     }
 
-    Loader {
-        id: dialogLoader
-        active: false
-        sourceComponent: LineDialog {
-            running: false
-            visible: true
-            onClosing: {
-                visible = false
-                console.log("Dialog closing")
-                lineAttrModel = null
-                dialogLoader.close()
-            }
-        }
-        function open(model,object, openMode) {
-            active = true;
-            dialogLoader.item.open(model,object, openMode)
-        }
-        function close() {
-            active = false;
-        }
-    }
 
+    LineDialog {
+        id: chartLineDialog
+        running: false
+    }
 }
