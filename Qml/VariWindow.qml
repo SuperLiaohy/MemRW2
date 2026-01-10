@@ -141,8 +141,12 @@ FluSheet {
         anchors.left: customAdd.left
         anchors.right: customAdd.right
         clip: true
+
+        // 禁止水平方向的任何滚动
+        boundsMovement: Flickable.StopAtBounds
+        boundsBehavior: Flickable.StopAtBounds
         resizableColumns: true
-        width: parent.width
+
         onWidthChanged: forceLayout()
         delegate: Item {
             implicitWidth: minItemWidth(column)
@@ -178,13 +182,21 @@ FluSheet {
         anchors.right: customAdd.right
         model: myTreeModel
         clip: true
+
+
+        // 禁止水平方向的任何滚动
+        boundsMovement: Flickable.StopAtBounds
+        boundsBehavior: Flickable.StopAtBounds
+
         selectionModel: ItemSelectionModel {
             id: selModel
             model: treeView.model
         }
 
         delegate: Item {
-            implicitWidth: padding + label.x + label.minWidth + padding
+            id: control
+            width:300
+            implicitWidth: padding + label.x + label.implicitWidth + padding
             implicitHeight: 30
 
             readonly property real indentation: 20
@@ -200,79 +212,96 @@ FluSheet {
             required property int column
             required property bool current
 
+            // 背景
             FluRectangle {
                 id: background
                 anchors.fill: parent
-                color: row === treeView.currentRow ? palette.highlight : (FluTheme.dark ? "#2a2a2a" : "#f0f0f0")
-                opacity: 0.3
+                color: {
+                    if (control.current)
+                        return palette.highlight
+                    return FluTheme.dark ? "#2a2a2a" : "#f0f0f0"
+                }
+                opacity: control.current ? 0.6 : 0.3
                 borderColor: "#145eef"
-                borderWidth: 1
+                borderWidth: control.current ? 1 : 0
                 radius: rad(column)
 
-                function rad(column) {
-                    if (column === 0) return [7, 0, 0, 7]
-                    if (column === 3) return [0, 7, 7, 0]
-                    return [0, 0, 0, 0]
+                function rad(col) {
+                    if (col === 0)      return [7, 0, 0, 7]
+                    if (col === treeView.columnCount - 1) return [0, 7, 7, 0]
+                    return 0
                 }
             }
 
             RowLayout {
-                anchors.fill:parent
+                anchors.fill: parent
+                spacing: 0
+                anchors.leftMargin: column===0? padding + depth * indentation:0
+
+                // 展开/折叠指示器
                 Loader {
                     id: indicatorLoader
                     active: isTreeNode && hasChildren
-                    anchors.verticalCenter: parent.verticalCenter
+                    visible: active
+                    Layout.alignment: Qt.AlignVCenter
                     sourceComponent: FluIcon {
-                        id: indicator
-                        x: 5 + padding + (depth * indentation)
                         iconSource: expanded ? FluentIcons.ChevronDown : FluentIcons.ChevronRight
-                        iconSize: 10
+                        iconSize: 12
+
                         MouseArea {
                             anchors.fill: parent
                             onClicked: {
-                                let index = treeView.index(row, column)
-                                treeView.selectionModel.setCurrentIndex(index, ItemSelectionModel.NoUpdate)
+                                let idx = treeView.index(row, column)
+                                treeView.selectionModel.setCurrentIndex(idx, ItemSelectionModel.NoUpdate)
                                 treeView.toggleExpanded(row)
                             }
                         }
                     }
                 }
 
+                // 主要文本内容
                 FluText {
                     id: label
-                    x: padding + (isTreeNode ? (depth + 1) * indentation : 0)
-                    property int minWidth: minItemWidth(column)
-                    width: Math.max(minWidth, parent.width - padding - x)
-                    anchors.verticalCenter: parent.verticalCenter
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 5
+                    Layout.alignment: Qt.AlignVCenter
+                    text: {
+                        // if (column === 0)
+                        //     return smartElideLeft(model.display, label.contentWidth, fontMetrics)
+                        return model.display
+                    }
                     clip: true
-                    text: column === 0 ? smartElideLeft(model.display, width, fm) : model.display
-                    FontMetrics {
-                        id: fm; font: label.font
-                    }
-
-                    function smartElideLeft(path, maxWidth, fontMetrics) {
-                        if (fontMetrics.boundingRect(path).width <= maxWidth) return path;
-                        var parts = path.split('/');  // Linux/Mac 路径
-                        // var parts = path.split('\\'); // Windows 路径，可根据需要判断
-                        while (parts.length > 1) {
-                            parts.shift();  // 移除最左侧的目录
-                            var temp = ".../" + parts.join('/');
-                            if (fontMetrics.boundingRect(temp).width <= maxWidth) return temp;
-                        }
-                        return ".../" + parts[0];  // 只剩最后一部分
-                    }
+                    elide: Text.ElideLeft
+                    // FontMetrics {
+                    //     id: fontMetrics
+                    //     font: label.font
+                    // }
+                    // // 左省略函数（路径专用）
+                    // function smartElideLeft(text, maxWidth, fm) {
+                    //     if (fm.boundingRect(text).width <= maxWidth)
+                    //         return text
+                    //     let parts = text.split('/')  // Linux/Mac路径
+                    //     // let parts = text.split('\\') // 如果是Windows路径可切换
+                    //     while (parts.length > 1) {
+                    //         parts.shift()
+                    //         let temp = ".../" + parts.join('/')
+                    //         if (fm.boundingRect(temp).width <= maxWidth)
+                    //             return temp
+                    //     }
+                    //     return ".../" + parts[0]
+                    // }
                 }
 
+                // 添加按钮（只在第一列且叶子节点显示）
                 Loader {
-                    id: addBtn
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
+                    id: addBtnLoader
                     active: !hasChildren && column === 0
+                    visible: active
+                    Layout.alignment: Qt.AlignVCenter
                     sourceComponent: FluIconButton {
                         iconSource: FluentIcons.Add
-                        onClicked: {
-                            sheet.appendAction(model);
-                        }
+                        iconSize: 16
+                        onClicked: sheet.appendAction(model)
                     }
                 }
             }
