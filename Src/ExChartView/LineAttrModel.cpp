@@ -62,6 +62,7 @@ bool LineAttrModel::setData(const QModelIndex &index, const QVariant &value, int
     if (!index.isValid()) return {};
     auto& attr = lineAttrs[index.row()];
     bool changed = false;
+    auto& line  = reinterpret_cast<ExChartView*>(this->parent())->lines[index.row()];
 
     switch (role) {
         case NameRole:
@@ -74,25 +75,28 @@ bool LineAttrModel::setData(const QModelIndex &index, const QVariant &value, int
             if (attr->config.color!=value.toString()) {
                 attr->config.color = value.toString();
                 changed = true;
+                reinterpret_cast<ExChartView*>(this->parent())->update();
             }
             break;
         case VisibleRole:
             if (attr->config.visible!=value.toBool()) {
                 attr->config.visible= value.toBool();
                 changed = true;
+                reinterpret_cast<ExChartView*>(this->parent())->update();
             }
             break;
         case BufCapRole:
             if (attr->config.capacity!=value.toUInt()) {
                 attr->config.capacity = value.toUInt();
+                line.setCapacity(attr->config.capacity);
                 changed = true;
+                reinterpret_cast<ExChartView*>(this->parent())->update();
             }
             break;
         case BufLenRole:
             if (attr->view.pointsLen!=value.toUInt()) {
                 attr->view.pointsLen = value.toUInt();
                 changed = true;
-                qDebug()<<"attr.view.pointsLen: "<<attr->view.pointsLen;
             }
             break;
         case PaintLenRole:

@@ -12,6 +12,13 @@ name(name), size(size), address(address) {
     qDebug()<<"name: "<<name << "size: "<<size<<"type: "<<getTypeName()<<"address: "<<address;
 }
 
+void VariComponent::updateFromModel(const QModelIndex &index) {
+    auto variNode = static_cast<VariNode *>(index.internalPointer());
+    size = variNode->getSize();
+    type = getTypeFromString(QString::fromStdString(variNode->getType()));
+    address = variNode->getAbsolute();
+}
+
 QString VariComponent::getTypeName() const {
     switch (type) {
         case Type::INT8:

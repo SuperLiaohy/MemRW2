@@ -4,6 +4,8 @@
 
 #include "Backend.hpp"
 
+#include <qqmlcontext.h>
+
 #include "ExChartView.hpp"
 #include "Src/USBInterface/DAPReader.h"
 
@@ -44,6 +46,10 @@ void Backend::init() {
     });
 }
 
+void Backend::registerVariModel(const QQmlApplicationEngine &engine) {
+    engine.rootContext()->setContextProperty("myTreeModel", variModel.get());
+}
+
 bool Backend::connect() {
     if (daplink->auto_connect()) {
 
@@ -63,6 +69,14 @@ void Backend::disconnect() {
     daplink->disconnect();
     connected = false;
     emit connectedChanged();
+}
+
+QStringList Backend::reloadVari() {
+    QStringList variList;
+    for (auto plugin: pluginContainer) {
+        variList.append(plugin->reloadVari());
+    }
+    return variList;
 }
 
 void Backend::requestHandler() {

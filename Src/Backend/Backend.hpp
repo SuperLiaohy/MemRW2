@@ -3,11 +3,13 @@
 //
 
 #pragma once
+#include <QQmlApplicationEngine>
 #include <qqmlengine.h>
 #include <thread>
 
 
 #include "DAPReader.h"
+#include "TreeModel.hpp"
 class DisplayPluginInterface;
 class ExChartView;
 
@@ -39,7 +41,7 @@ class Backend : public QObject {
     QML_SINGLETON
     Q_PROPERTY(bool running READ getRunning WRITE setRunning NOTIFY runningChanged)
     Q_PROPERTY(bool connected READ getConnected NOTIFY connectedChanged)
-    Backend() : daplink(std::make_unique<DAPReader>()) {};
+    Backend() : daplink(std::make_unique<DAPReader>()), variModel(std::make_unique<TreeModel>(std::make_shared<VariTree>())) {};
 public:
     static Backend& instance() {static Backend backend;return backend;}
     static Backend* create(QQmlEngine* qmlEngine, QJSEngine* jsEngine) {
@@ -50,12 +52,14 @@ public:
         return result;
     }
     void init();
+    void registerVariModel(const QQmlApplicationEngine&engine);
     bool getRunning() {return  running;}
     void setRunning(bool run) {running.store(run);emit runningChanged();}
     bool getConnected() {return  connected;}
 
     Q_INVOKABLE bool connect();
     Q_INVOKABLE void disconnect();
+    Q_INVOKABLE QStringList reloadVari();
 
     Sync sync{};
     Clock clock{};
@@ -66,6 +70,7 @@ public:
     void pushPlugin(DisplayPluginInterface *plugin);
     void erasePlugin(DisplayPluginInterface *plugin);
 
+    QModelIndex findNode(const QString& nodeName) {return variModel->findNode(nodeName);};
 signals:
     void runningChanged();
     void connectedChanged();
@@ -77,4 +82,6 @@ private:
     std::jthread samplingWorker;
     std::vector<DisplayPluginInterface*> pluginContainer;
     std::unique_ptr<DAPReader> daplink;
+    std::unique_ptr<TreeModel> variModel;
+
 };

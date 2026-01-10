@@ -71,19 +71,19 @@ std::optional<std::size_t> Die::getArrayLen() {
             auto res = dwarf_attr(die.die,DW_AT_count, attr.ptr(), error.ptr());
             if (res == DW_DLV_OK) {
                 res = dwarf_formudata(*attr.ptr(), static_cast<Dwarf_Unsigned *>(userData), error.ptr());
-                if (res == DW_DLV_OK)return *static_cast<Dwarf_Unsigned *>(userData);
+                if (res == DW_DLV_OK)return false;
             }
             error.clear();
             res = dwarf_attr(die.die, DW_AT_upper_bound, attr.ptr(), error.ptr());
             if (res == DW_DLV_OK) {
                 res = dwarf_formudata(*attr.ptr(), static_cast<Dwarf_Unsigned *>(userData), error.ptr());
-                if (res == DW_DLV_OK)return 1+*static_cast<Dwarf_Unsigned *>(userData);
+                if (res == DW_DLV_OK){ *static_cast<Dwarf_Unsigned *>(userData)+=1; return false;}
             }
             error.clear();
             res = dwarf_attr(die.die, DW_AT_lower_bound, attr.ptr(), error.ptr());
             if (res == DW_DLV_OK) {
                 res = dwarf_formudata(*attr.ptr(), static_cast<Dwarf_Unsigned *>(userData), error.ptr());
-                if (res == DW_DLV_OK)return 1+*static_cast<Dwarf_Unsigned *>(userData);
+                if (res == DW_DLV_OK){ *static_cast<Dwarf_Unsigned *>(userData)+=1; return false;}
             }
         }
         return false;

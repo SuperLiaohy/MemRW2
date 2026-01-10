@@ -5,6 +5,7 @@
 #pragma once
 
 #include "DisplayPluginInterface.hpp"
+#include "LineAttrModel.hpp"
 #include "VariTree.hpp"
 
 class DisplayPluginInterface;
@@ -19,8 +20,9 @@ public:
     [[nodiscard]] Type getType() const {return type;}
     [[nodiscard]] std::size_t getAddress() const {return address;}
 
-    [[nodiscard]] QString getTypeName() const;
+    void updateFromModel(const QModelIndex& index);
 
+    [[nodiscard]] QString getTypeName() const;
     qreal fValue;
     union {
         std::uint8_t u8;

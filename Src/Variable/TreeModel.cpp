@@ -98,8 +98,23 @@ void TreeModel::setTreeData(const QUrl& path) {
     endResetModel();
 }
 
-QModelIndex TreeModel::findNode(const QString &nodeName) {
-    auto nodesName = nodeName.split('.');
+QModelIndex TreeModel::findNode(const QString &nodeSearchName) {
+    QStringList nodesName;
+    qsizetype pos = 0;
+    qsizetype beginArray = 0;
+    for (int i = 0; i < nodeSearchName.size(); ++i) {
+        if (nodeSearchName[i]=='.') {
+            nodesName.append(nodeSearchName.mid(pos, i - pos));
+            pos = i+1;
+        } else if (nodeSearchName[i]=='[') {
+            nodesName.append(nodeSearchName.mid(pos, i - pos));
+            beginArray = i;
+            pos = i+1;
+        } else if (nodeSearchName[i]==']') {
+            nodesName.append(nodeSearchName.mid(beginArray, i - beginArray + 1));
+            pos = i+1;
+        }
+    }
     qDebug()<<nodesName;
     if (nodesName.isEmpty()) return QModelIndex();
     VariNode* node = nullptr;

@@ -13,6 +13,31 @@ auto getMemberHelper(dwarf::Die& die, void* userData) -> bool;
 
 void getMember(dwarf::Die& die, VariNode *node) {
     using namespace dwarf;
+    auto tag = die.getTag().value_or(0);
+    if (tag==DW_TAG_array_type) {
+        auto len = die.getArrayLen();
+        if (len==std::nullopt) return;
+        if (*len>256) {return;}
+        std::size_t size = node->getSize()/(*len);
+        auto realType = die.getTypeDie();
+        if (realType==std::nullopt) {return;};
+        auto type = TypeDie(&*realType);
+        auto str = type.getName();
+        if (str==std::nullopt) {return;};
+        auto memNode = new VariNode(nullptr);
+        memNode->setName("[0]");
+        memNode->setOffset(0);
+        memNode->setSize(size);
+        memNode->setType(*str);
+        auto deepType = die.getDeepTypeDie();
+        if (deepType!=std::nullopt) getMember(*deepType,memNode);
+        node->addChild(memNode,*len);
+        for (std::size_t i=1;i<len;i++) {
+            auto c = node->getChild(i);
+            c->setName('['+std::to_string(i)+']');
+            c->setOffset(i*(size));
+        }
+    }
     die.recursion(getMemberHelper,node);
 }
 

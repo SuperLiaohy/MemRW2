@@ -52,6 +52,7 @@ FluWindow {
         id:sheet
         size: parent.height*0.614
         maxSize: parent.height
+        // reloadAction: Backend.reloadVari
     }
 
     // ==================== 动画 ====================

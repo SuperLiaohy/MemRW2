@@ -39,6 +39,7 @@ std::shared_ptr<VariTree> getVariTree(std::string path) {
                 node->setName(VariTree::contextStr() + *name);
                 node->setOffset(*loc);
                 node->setType(*typeName);
+
                 auto size = type.getSize();
                 if (size!=std::nullopt) {node->setSize(*size);}
                 auto deepType = die.getDeepTypeDie();
@@ -66,7 +67,7 @@ std::shared_ptr<VariTree> getVariTree(std::string path) {
                     auto node = std::make_shared<VariNode>(nullptr);
                     node->setName(VariTree::contextStr() + *name);
                     getMember(die,node.get());
-                    VariTree::typeMap.emplace(node->getName(), node);
+                    // VariTree::typeMap.emplace(node->getName(), node);
                     if (isSpaceTypeTag(tag)) {
                         VariTree::context.push_back(*typeDie.getName());
                     }

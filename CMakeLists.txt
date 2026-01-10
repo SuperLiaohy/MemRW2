@@ -13,7 +13,7 @@ pkg_check_modules(LIBUSB REQUIRED IMPORTED_TARGET libusb-1.0)
 add_subdirectory(DwarfCpp)
 add_executable(MemRW main.cpp)
 
-target_include_directories(MemRW PUBLIC Src/UIComponent Src/USBInterface Src/ExChartView Src/Backend)
+target_include_directories(MemRW PUBLIC Src/UIComponent Src/USBInterface Src/ExChartView Src/Backend Src/Variable)
 qt_add_qml_module(MemRW
         URI MemRWApp
         QML_FILES

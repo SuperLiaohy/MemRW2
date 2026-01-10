@@ -16,6 +16,7 @@ public:
     ~VariNode() {for (auto child: children) delete child;}
     void setParent(VariNode* p) {parent=p;}
     void addChild(VariNode* node) {children.push_back(node);node->parent=this;}
+    void addChild(VariNode* node, int n);
     void addChildrenTree(VariNode* tree);
 
     void setName(const std::string &n) {name = n;}

@@ -14,6 +14,16 @@ DisplayPluginInterface::~DisplayPluginInterface() {
     Backend::instance().erasePlugin(this);
 }
 
+QStringList DisplayPluginInterface::reloadVari() {
+    QStringList failedList;
+    for (auto& vari: variContainer) {
+        QModelIndex index = Backend::instance().findNode(vari->getName());
+        if (!index.isValid()) {failedList.append(vari->getName());continue;}
+        vari->updateFromModel(index);
+    }
+    return failedList;
+}
+
 void DisplayPluginInterface::pushUnit(const QString&name , const QString& type, std::size_t address, std::size_t size) {
     auto vari = std::make_shared<VariComponent>(name,type,address,size);
     variContainer.push_back(vari);

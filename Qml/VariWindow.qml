@@ -78,7 +78,11 @@ FluSheet {
             id: reloadBtn
             text: qsTr("重新加载")
             onClicked: {
-                fileDialog.open()
+                myTreeModel.setTreeData(fileText.text);
+                let variList = Backend.reloadVari()
+                console.log(variList)
+                if (variList.length!==0) failedVariDialog.openList(variList)
+                else showSuccess("Successfully reloaded")
             }
         }
     }
@@ -125,31 +129,25 @@ FluSheet {
             showSuccess("Successfully found the variable")
         }
     }
-    function minItemWidth(column) {
-        if (column===0) {
-            return (customAdd.width)*0.65
-        }
-        if (column===1) {
-            return (customAdd.width)*0.15
-        }
-        return (customAdd.width)*0.1
-    }
+
+    property var columnWidths: [0.65, 0.15, 0.1, 0.1]
     HorizontalHeaderView {
         id: header
         syncView: treeView
         anchors.top: customAdd.bottom
         anchors.left: customAdd.left
         anchors.right: customAdd.right
-        clip: true
 
-        // 禁止水平方向的任何滚动
+        clip: true
         boundsMovement: Flickable.StopAtBounds
         boundsBehavior: Flickable.StopAtBounds
-        resizableColumns: true
 
+        property real dragLeftWidth: 0
+        property real dragRightWidth: 0
+        property real minColumn: 0.08
+        property real dragX: 0
         onWidthChanged: forceLayout()
         delegate: Item {
-            implicitWidth: minItemWidth(column)
             implicitHeight: label.implicitHeight * 2
             FluRectangle {
                 id: background
@@ -171,6 +169,37 @@ FluSheet {
                 clip: true
                 text: model.display
             }
+            MouseArea {
+                id: dragHandler
+                enabled: treeView.model.rowCount()>0
+                visible: column < 3
+                width: 10
+                anchors.right: parent.right
+                anchors.rightMargin: -width/2
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                cursorShape: Qt.SplitHCursor
+                onPressed: {
+                    header.dragLeftWidth = sheet.columnWidths[column]
+                    header.dragRightWidth = sheet.columnWidths[column+1]
+                    header.dragX = mapToGlobal(mouseX,mouseY).x
+                    console.log("drag")
+                }
+                onPositionChanged: {
+                    if (pressed) {
+                        let delta = (header.dragX - mapToGlobal(mouseX,mouseY).x)/header.width
+
+                        let newLeft = Math.max(header.minColumn, header.dragLeftWidth - delta)
+                        let newRight = Math.max(header.minColumn, header.dragRightWidth + header.dragLeftWidth - newLeft)
+                        newLeft = header.dragRightWidth + header.dragLeftWidth - newRight
+
+                        sheet.columnWidths[column] = newLeft
+                        sheet.columnWidths[column + 1] = newRight
+
+                        treeView.forceLayout()
+                    }
+                }
+            }
         }
     }
 
@@ -180,10 +209,11 @@ FluSheet {
         anchors.bottom: parent.bottom
         anchors.left: customAdd.left
         anchors.right: customAdd.right
+
+        columnWidthProvider: function(column) {return columnWidths[column]*width}
+
         model: myTreeModel
         clip: true
-
-
         // 禁止水平方向的任何滚动
         boundsMovement: Flickable.StopAtBounds
         boundsBehavior: Flickable.StopAtBounds
@@ -219,7 +249,7 @@ FluSheet {
                 color: {
                     if (control.current)
                         return palette.highlight
-                    return FluTheme.dark ? "#2a2a2a" : "#f0f0f0"
+                    color: FluTheme.dark ? "#1e1e1e" : "#e0e0e0"
                 }
                 opacity: control.current ? 0.6 : 0.3
                 borderColor: "#145eef"
@@ -237,8 +267,6 @@ FluSheet {
                 anchors.fill: parent
                 spacing: 0
                 anchors.leftMargin: column===0? padding + depth * indentation:0
-
-                // 展开/折叠指示器
                 Loader {
                     id: indicatorLoader
                     active: isTreeNode && hasChildren
@@ -247,7 +275,6 @@ FluSheet {
                     sourceComponent: FluIcon {
                         iconSource: expanded ? FluentIcons.ChevronDown : FluentIcons.ChevronRight
                         iconSize: 12
-
                         MouseArea {
                             anchors.fill: parent
                             onClicked: {
@@ -258,41 +285,15 @@ FluSheet {
                         }
                     }
                 }
-
-                // 主要文本内容
                 FluText {
                     id: label
                     Layout.fillWidth: true
                     Layout.leftMargin: 5
                     Layout.alignment: Qt.AlignVCenter
-                    text: {
-                        // if (column === 0)
-                        //     return smartElideLeft(model.display, label.contentWidth, fontMetrics)
-                        return model.display
-                    }
+                    text: model.display
                     clip: true
                     elide: Text.ElideLeft
-                    // FontMetrics {
-                    //     id: fontMetrics
-                    //     font: label.font
-                    // }
-                    // // 左省略函数（路径专用）
-                    // function smartElideLeft(text, maxWidth, fm) {
-                    //     if (fm.boundingRect(text).width <= maxWidth)
-                    //         return text
-                    //     let parts = text.split('/')  // Linux/Mac路径
-                    //     // let parts = text.split('\\') // 如果是Windows路径可切换
-                    //     while (parts.length > 1) {
-                    //         parts.shift()
-                    //         let temp = ".../" + parts.join('/')
-                    //         if (fm.boundingRect(temp).width <= maxWidth)
-                    //             return temp
-                    //     }
-                    //     return ".../" + parts[0]
-                    // }
                 }
-
-                // 添加按钮（只在第一列且叶子节点显示）
                 Loader {
                     id: addBtnLoader
                     active: !hasChildren && column === 0
@@ -313,12 +314,41 @@ FluSheet {
         nameFilters: ["dwarf files [*.elf *.axf] (*.elf *.axf)", "all files [*.*] (*.*)"]
 
         onAccepted: {
-            console.log("选择了:", selectedFile)
-            console.log("选择了:", data)
+            console.log("selected:", selectedFile)
             fileText.text = selectedFile;
-            myTreeModel.setTreeData(selectedFile);
+            myTreeModel.setTreeData(fileText.text);
         }
     }
+
+    FluContentDialog{
+        id: failedVariDialog
+        title: qsTr("Failed Vari")
+        message: qsTr("Please delete them or manually load them.")
+        buttonFlags: FluContentDialogType.PositiveButton
+        property var failedList:null
+        contentDelegate: Component{
+            Item{
+                width: parent.width
+                implicitHeight: failedVariView.height
+                ListView {
+                    id: failedVariView
+                    width: 300
+                    height: 200
+                    model: failedVariDialog.failedList
+                    clip: true
+                    delegate: FluText {
+                        anchors.centerIn: parent
+                        text: (index+1)+": "+modelData
+                    }
+                }
+            }
+        }
+        function openList(list) {
+            failedVariDialog.failedList = list
+            open()
+        }
+    }
+
     function openAppendNode(f) {
         sheet.appendAction = f;
         open(FluSheetType.Bottom)

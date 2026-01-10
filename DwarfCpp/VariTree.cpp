@@ -9,6 +9,19 @@
 std::unordered_map<std::string,std::shared_ptr<VariNode>> VariTree::typeMap;
 std::vector<std::string> VariTree::context;
 
+void VariNode::addChild(VariNode *node, int n) {
+    auto origin = children.size();
+    children.resize(origin+n);
+    children[origin] = node;
+    node->parent = this;
+    for (int i = 1; i < n; ++i) {
+        auto item = new VariNode(*node);
+        item->addChildrenTreeHelper(item);
+        children[origin+i] = item;
+        item->parent = this;
+    }
+}
+
 void VariNode::addChildrenTree(VariNode* tree) {
     auto origin = children.size();
     children.resize(origin+tree->getChildSize());

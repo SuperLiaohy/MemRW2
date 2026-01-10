@@ -78,7 +78,7 @@ ExChartView::ExChartView(QQuickItem *parent) : QQuickItem(parent), lineAttrModel
     }
 
     connect(this,&ExChartView::timingUpdate,this,&ExChartView::updatePath);
-    connect(lineAttrModel, &LineAttrModel::dataChanged, this,&ExChartView::onAttrChanged);
+
     QTimer* timer = new QTimer(this);
     timer->setInterval(1000);
     connect(timer,&QTimer::timeout,this,[this](){realFps=frameCount;frameCount=0;emit realFpsChanged();});
@@ -90,7 +90,6 @@ ExChartView::~ExChartView() {
 }
 
 QSGNode * ExChartView::updatePaintNode(QSGNode *qsg_node, UpdatePaintNodeData *update_paint_node_data) {
-    qDebug()<<"paint";
     ++frameCount;
     QSGNode* root = qsg_node?qsg_node:new QSGNode;
     QSGGeometryNode* node = nullptr;    QSGGeometry *geom = nullptr;
@@ -141,6 +140,7 @@ QSGNode * ExChartView::updatePaintNode(QSGNode *qsg_node, UpdatePaintNodeData *u
             node->setMaterial(mat);
             node->setFlag(QSGNode::OwnsMaterial);
             root->appendChildNode(node);
+            qDebug()<<"paint";
         } else {
             geom = node->geometry();
             auto mat = static_cast<QSGFlatColorMaterial *>(node->material());
@@ -213,38 +213,6 @@ void ExChartView::clearData() {
     setViewXMax(viewXCenter+viewXRange/2);
     setViewYMin(viewYCenter-viewYRange/2);
     setViewYMax(viewYCenter+viewYRange/2);
-}
-
-void ExChartView::onAttrChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QList<int> &roles) {
-    if (topLeft.row()!=bottomRight.row())return;
-    if (roles.empty())return;
-    auto role = roles[0];
-    switch (role) {
-        case LineAttrModel::NameRole:
-            break;
-        case LineAttrModel::ColorRole:
-            update();
-            break;
-        case LineAttrModel::VisibleRole:
-            update();
-            break;
-        case LineAttrModel::BufCapRole:
-            break;
-        case LineAttrModel::BufLenRole:
-            break;
-        case LineAttrModel::PaintLenRole:
-            break;
-        case LineAttrModel::GroupRole:
-            break;
-        case LineAttrModel::VariName:
-            break;
-        case LineAttrModel::VariType:
-            break;
-        case LineAttrModel::VariAddr:
-            break;
-        default:
-            break;
-    }
 }
 
 void ExChartView::onAttrRemoved(int index) {

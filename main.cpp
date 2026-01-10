@@ -12,10 +12,8 @@ int main(int argc, char *argv[])
 
     QQmlApplicationEngine engine;
 
-    auto variModel = std::make_unique<TreeModel>(std::make_shared<VariTree>());
-    engine.rootContext()->setContextProperty("myTreeModel", variModel.get());
-
     Backend::instance().init();
+    Backend::instance().registerVariModel(engine);
 
     engine.loadFromModule("MemRWApp", "Main");
     // engine.load(QUrl::fromLocalFile("../qml/Main.qml"));

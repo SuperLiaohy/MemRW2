@@ -22,6 +22,7 @@ public:
     bool deleteLater = false;
     quint32 getLen() {return len;}
     quint32 getCapacity() {return capacity;}
+    void setCapacity(quint32 c) {buf.resize(c); clear(); capacity = c;}
     void write(const QPointF& point);
     void writeBuffer(const QVector<QPointF>& points);
     [[nodiscard]] QPointF at(quint32 index) const;
@@ -84,7 +85,6 @@ public:
     void setTargetFps(quint32 fps){ targetFps = fps; emit targetFpsChanged();}
     void setFlow(bool isFlow){ flow = isFlow; emit flowChanged();}
 
-    void onAttrChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight,const QList<int> &roles);
     void onAttrRemoved(int index);
     void onAttrPushed(const QString&name , const QString& type, std::size_t address, std::size_t size);
 signals:
@@ -102,6 +102,7 @@ signals:
     void flowChanged();
     void timingUpdate(qreal runTime);
 private:
+    friend bool LineAttrModel::setData(const QModelIndex &index, const QVariant &value, int role);
     qreal viewXRange = 5000;
     qreal viewYRange = 1000;
     qreal viewXCenter = 2500;
