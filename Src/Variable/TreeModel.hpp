@@ -14,7 +14,8 @@ class TreeModel : public QAbstractItemModel
 public:
     Q_DISABLE_COPY_MOVE(TreeModel)
     enum RoleNames {
-        TypeRole = Qt::UserRole + 1,
+        NameRole = Qt::UserRole + 1,
+        TypeRole,
         SizeRole,
         AddrRole,
     };

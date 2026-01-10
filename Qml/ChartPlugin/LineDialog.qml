@@ -43,7 +43,7 @@ FluContentDialog {
     function openWithMode(model, object, openMode) {
         // 加载当前属性
         if (openMode === LineDialog.OpenMode.Add) {
-            editName = object.display
+            editName = object.name
             editColor = "red"
             editBufferSize = 5000
             console.log("Opening dialog for vari:", "name:", editName, "OpenMode: Add")
@@ -51,7 +51,7 @@ FluContentDialog {
             visible = true
             lineAttrModel = model;
 
-            variName = object.display
+            variName = object.name
             variType = object.type
             variSize = object.size
             variAddr = object.addr

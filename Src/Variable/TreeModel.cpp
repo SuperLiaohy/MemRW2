@@ -20,6 +20,7 @@ TreeModel::~TreeModel() {
 QHash<int, QByteArray> TreeModel::roleNames() const {
     return {
         {Qt::DisplayRole, "display"},
+        {NameRole, "name"},
         {TypeRole, "type"},
         {SizeRole, "size"},
         {AddrRole, "addr"},
@@ -31,6 +32,8 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const {
     auto item = static_cast<VariNode *>(index.internalPointer());
     if (role == Qt::DisplayRole) {
         return QString::fromStdString(item->data(index.column()));
+    } else if (role == NameRole) {
+        return QString::fromStdString(item->getRecursionName());
     } else if (role == TypeRole) {
         return item->getType().data();
     } else if (role == AddrRole) {

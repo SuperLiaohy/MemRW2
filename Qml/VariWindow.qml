@@ -22,10 +22,11 @@ FluSheet {
 
     Rectangle {
         id: dragHandle
-        width: parent.width * 0.95
+        width: parent.width * 0.618/4
         height: 6
         radius: 3
         color: "#80000000"
+        opacity: 0.4
         anchors.top: parent.top  // 固定在顶部
         anchors.horizontalCenter: parent.horizontalCenter
 
@@ -57,6 +58,8 @@ FluSheet {
         id: toolBar
         anchors.top: dragHandle.bottom
         anchors.topMargin: 10
+        width: parent.width - 30
+        anchors.horizontalCenter: parent.horizontalCenter
         FluButton {
             id: loadBtn
             text: qsTr("选择文件")
@@ -70,11 +73,20 @@ FluSheet {
             id: fileText
             text: "";
         }
+        Item { Layout.fillWidth: true }
+        FluButton {
+            id: reloadBtn
+            text: qsTr("重新加载")
+            onClicked: {
+                fileDialog.open()
+            }
+        }
     }
     RowLayout {
         id: customAdd
         anchors.top: toolBar.bottom
-        width: parent.width
+        anchors.left: toolBar.left
+        anchors.right: toolBar.right
         height: 45
         FluText {
             text: "Quick variable addition: "
@@ -90,7 +102,6 @@ FluSheet {
             }
         }
         FluIconButton {
-            Layout.rightMargin: 10
             iconSource: FluentIcons.ReturnKey
             onClicked: customAdd.search()
         }
@@ -116,19 +127,19 @@ FluSheet {
     }
     function minItemWidth(column) {
         if (column===0) {
-            return (sheet.width)/2
+            return (customAdd.width)*0.65
         }
         if (column===1) {
-            return (sheet.width)/6
+            return (customAdd.width)*0.15
         }
-        return (sheet.width)/12
+        return (customAdd.width)*0.1
     }
     HorizontalHeaderView {
         id: header
         syncView: treeView
         anchors.top: customAdd.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
+        anchors.left: customAdd.left
+        anchors.right: customAdd.right
         clip: true
         resizableColumns: true
         width: parent.width
@@ -163,8 +174,8 @@ FluSheet {
         id: treeView
         anchors.top: header.bottom
         anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
+        anchors.left: customAdd.left
+        anchors.right: customAdd.right
         model: myTreeModel
         clip: true
         selectionModel: ItemSelectionModel {
@@ -173,17 +184,13 @@ FluSheet {
         }
 
         delegate: Item {
-            // implicitWidth: Math.max(
-            //     padding + label.x + 200 + padding,   // 内容需求
-            //     padding + label.x + label.minWidth + padding        // 最小宽度需求
-            // )
             implicitWidth: padding + label.x + label.minWidth + padding
-            implicitHeight: label.implicitHeight * 1.5
+            implicitHeight: 30
 
             readonly property real indentation: 20
             readonly property real padding: 5
 
-            // Assigned to by TreeView:
+            // required by TreeView:
             required property TreeView treeView
             required property bool isTreeNode
             required property bool expanded
@@ -193,29 +200,11 @@ FluSheet {
             required property int column
             required property bool current
 
-            // Rotate indicator when expanded by the user
-            // (requires TreeView to have a selectionModel)
-            property Animation indicatorAnimation: NumberAnimation
-            {
-                target: indicatorLoader.item
-                property: "rotation"
-                from: expanded ? 0 : 90
-                to: expanded ? 90 : 0
-                duration: 100
-                easing.type: Easing.OutQuart
-            }
-            TableView.onPooled: indicatorAnimation.complete()
-            TableView.onReused: if (current) indicatorAnimation.start()
-            onExpandedChanged: { if (indicatorLoader.item) indicatorLoader.item.rotation = expanded ? 90 : 0}
-
             FluRectangle {
                 id: background
                 anchors.fill: parent
-                // color:
                 color: row === treeView.currentRow ? palette.highlight : (FluTheme.dark ? "#2a2a2a" : "#f0f0f0")
                 opacity: 0.3
-
-
                 borderColor: "#145eef"
                 borderWidth: 1
                 radius: rad(column)
@@ -227,68 +216,66 @@ FluSheet {
                 }
             }
 
-            Loader {
-                id: indicatorLoader
-                active: isTreeNode && hasChildren
-                sourceComponent: FluText {
-                    id: indicator
-                    x: 5 + padding + (depth * indentation)
+            RowLayout {
+                anchors.fill:parent
+                Loader {
+                    id: indicatorLoader
+                    active: isTreeNode && hasChildren
                     anchors.verticalCenter: parent.verticalCenter
-                    // visible: isTreeNode && hasChildren
-                    text: "▶"
+                    sourceComponent: FluIcon {
+                        id: indicator
+                        x: 5 + padding + (depth * indentation)
+                        iconSource: expanded ? FluentIcons.ChevronDown : FluentIcons.ChevronRight
+                        iconSize: 10
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                let index = treeView.index(row, column)
+                                treeView.selectionModel.setCurrentIndex(index, ItemSelectionModel.NoUpdate)
+                                treeView.toggleExpanded(row)
+                            }
+                        }
+                    }
+                }
 
-                    TapHandler {
-                        onSingleTapped: {
-                            let index = treeView.index(row, column)
-                            treeView.selectionModel.setCurrentIndex(index, ItemSelectionModel.NoUpdate)
-                            treeView.toggleExpanded(row)
+                FluText {
+                    id: label
+                    x: padding + (isTreeNode ? (depth + 1) * indentation : 0)
+                    property int minWidth: minItemWidth(column)
+                    width: Math.max(minWidth, parent.width - padding - x)
+                    anchors.verticalCenter: parent.verticalCenter
+                    clip: true
+                    text: column === 0 ? smartElideLeft(model.display, width, fm) : model.display
+                    FontMetrics {
+                        id: fm; font: label.font
+                    }
+
+                    function smartElideLeft(path, maxWidth, fontMetrics) {
+                        if (fontMetrics.boundingRect(path).width <= maxWidth) return path;
+                        var parts = path.split('/');  // Linux/Mac 路径
+                        // var parts = path.split('\\'); // Windows 路径，可根据需要判断
+                        while (parts.length > 1) {
+                            parts.shift();  // 移除最左侧的目录
+                            var temp = ".../" + parts.join('/');
+                            if (fontMetrics.boundingRect(temp).width <= maxWidth) return temp;
+                        }
+                        return ".../" + parts[0];  // 只剩最后一部分
+                    }
+                }
+
+                Loader {
+                    id: addBtn
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    active: !hasChildren && column === 0
+                    sourceComponent: FluIconButton {
+                        iconSource: FluentIcons.Add
+                        onClicked: {
+                            sheet.appendAction(model);
                         }
                     }
                 }
             }
-
-
-            FluText {
-                id: label
-                x: padding + (isTreeNode ? (depth + 1) * indentation : 0)
-                // width: parent.width - padding - x
-                property int minWidth: minItemWidth(column)
-                width: Math.max(minWidth, parent.width - padding - x)
-                anchors.verticalCenter: parent.verticalCenter
-                clip: true
-                text: column === 0 ? smartElideLeft(model.display, width, fm) : model.display
-                // text: model.display
-
-                FontMetrics {
-                    id: fm; font: label.font
-                }
-
-                function smartElideLeft(path, maxWidth, fontMetrics) {
-                    if (fontMetrics.boundingRect(path).width <= maxWidth) return path;
-                    var parts = path.split('/');  // Linux/Mac 路径
-                    // var parts = path.split('\\'); // Windows 路径，可根据需要判断
-                    while (parts.length > 1) {
-                        parts.shift();  // 移除最左侧的目录
-                        var temp = ".../" + parts.join('/');
-                        if (fontMetrics.boundingRect(temp).width <= maxWidth) return temp;
-                    }
-                    return ".../" + parts[0];  // 只剩最后一部分
-                }
-            }
-            Loader {
-                id: addBtn
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                active: !hasChildren && column===0
-                sourceComponent: FluIconButton {
-                    iconSource: FluentIcons.Add
-                    onClicked: {
-                        sheet.appendAction(model);
-                        // lineModel.appendLine(model.display,"red")
-                    }
-                }
-            }
-
         }
     }
 

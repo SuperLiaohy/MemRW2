@@ -57,6 +57,7 @@ public:
     std::size_t getAbsolute() const {return absolute;}
     const std::string& getType() const {return type;}
     std::size_t getSize() const {return size;}
+    std::string getRecursionName() const;
 
     std::string data(int column) const {
         switch (column) {
