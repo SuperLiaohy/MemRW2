@@ -137,8 +137,8 @@ FluFrame {
                         height: width
                         radius: width / 2
                         color: model.color
-                        x: index<tipsInfo.points.length? tipsInfo.points[index].x-width/2 : 0
-                        y: index<tipsInfo.points.length? tipsInfo.points[index].y-height/2: 0
+                        x: (index < tipsInfo.points.length && index>=0) ? tipsInfo.points[index].x - width/2 : 0
+                        y: (index < tipsInfo.points.length && index>=0) ? tipsInfo.points[index].y - height/2 : 0
                     }
                     Item {
                         x: hoverHandler.point.position.x + 25

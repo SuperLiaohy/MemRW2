@@ -9,6 +9,8 @@ FluFrame {
 
     property var lineAttrModel
 
+    required property bool running
+
     // overall layout
     ColumnLayout {
         anchors.fill: parent
@@ -25,14 +27,11 @@ FluFrame {
                 Layout.fillWidth: true
             }
             FluIconButton {
+                enabled: !frame.running
                 iconSource: FluentIcons.Add
                 iconSize: 11
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: function (event) {
-                        event.accepted = true
-                        sheet.openAppendNode(frame.appendAction)
-                    }
+                onClicked: {
+                    sheet.openAppendNode(frame.appendAction)
                 }
             }
             FluText {
@@ -122,12 +121,8 @@ FluFrame {
                     FluIconButton {
                         iconSource: FluentIcons.Delete
                         iconSize: 14
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: function (event) {
-                                event.accepted = true
-                                frame.lineAttrModel.removeLine(index);
-                            }
+                        onClicked: {
+                            frame.lineAttrModel.removeLine(index);
                         }
                     }
                 }
@@ -154,6 +149,6 @@ FluFrame {
 
     LineDialog {
         id: chartLineDialog
-        running: false
+        running: frame.running
     }
 }

@@ -20,7 +20,7 @@ class ExLine {
 public:
     ExLine(quint32 cap):writeHandle(0),len(0),capacity(cap){buf.resize(cap);}
     bool deleteLater = false;
-    bool capacityLater = false;
+    bool capacityLater = true;
     quint32 getLen() {return len;}
     quint32 getCapacity() {return capacity;}
     void setCapacity(quint32 c) {buf.resize(c);capacityLater = true; clear(); capacity = c;}

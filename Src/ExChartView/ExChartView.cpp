@@ -146,6 +146,7 @@ QSGNode * ExChartView::updatePaintNode(QSGNode *qsg_node, UpdatePaintNodeData *u
             geom = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), lines[i].getCapacity());
             geom->setVertexDataPattern(QSGGeometry::StreamPattern);
             geom->setVertexCount(range);
+            lines[i].capacityLater=false;
             geom->setDrawingMode(QSGGeometry::DrawLineStrip);
             geom->setLineWidth(3.0);
             node->setGeometry(geom);
@@ -160,7 +161,6 @@ QSGNode * ExChartView::updatePaintNode(QSGNode *qsg_node, UpdatePaintNodeData *u
             geom = node->geometry();
             auto mat = static_cast<QSGFlatColorMaterial *>(node->material());
             mat->setColor(lineAttrModel->lineAttrs[i]->config.color);
-        bool capacityLater;
             if (lines[i].capacityLater) {geom->allocate(lines[i].getCapacity()); lines[i].capacityLater=false;}
             if (geom->vertexCount() != range) geom->setVertexCount(range);
         }

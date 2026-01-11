@@ -17,7 +17,11 @@ FluWindow {
         id: bar
         height: 30
         showDark: true
-        darkClickListener:(button)=>handleDarkChanged(button)
+        // enabled:
+        darkClickListener:(button)=> {
+            enabled = false;
+            handleDarkChanged(button)
+        }
         z:7
     }
 
@@ -43,10 +47,7 @@ FluWindow {
 
 
     onHeightChanged: {
-        if (sheet.height>sheet.maxSize)
-            sheet.height = sheet.maxSize
-        console.log("height: ",height," width: ",width)
-
+        if (sheet.height>sheet.maxSize) sheet.height = sheet.maxSize
     }
     VariWindow {
         id:sheet
@@ -66,6 +67,7 @@ FluWindow {
             onAnimationFinished:{
                 //动画结束后释放资源
                 loader_reveal.sourceComponent = undefined
+                bar.enabled = true
             }
             onImageChanged: {
                 changeDark()

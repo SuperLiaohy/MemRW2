@@ -34,6 +34,7 @@ FluFrame {
                 Layout.fillHeight: true
                 lineAttrModel: chart.lineAttrModel
                 visible: chartBar.showLineList
+                running: Backend.running
             }
             ExChart {
                 id: chart

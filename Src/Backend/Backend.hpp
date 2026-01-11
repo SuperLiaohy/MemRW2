@@ -19,7 +19,7 @@ public:
     template<typename Callback>
     void sendRequest(Callback fun) {sem_request.release();sem_response.acquire(); fun(); sem_resume.release();}
     template<typename Callback>
-    void tryGetRequest(Callback fun) {if (sem_request.try_acquire()) {fun();sem_response.release();sem_resume.acquire();}}
+    void tryGetRequest(Callback fun) {if (sem_request.try_acquire()) {sem_response.release();sem_resume.acquire();fun();}}
 private:
     std::binary_semaphore sem_request{0};     // A → B: 有请求了 (初始0)
     std::binary_semaphore sem_response{0};    // B → A: 已应答 (初始0)
@@ -59,8 +59,8 @@ public:
     void setRunning(bool run) {running.store(run);emit runningChanged();}
     bool getConnected() const {return  connected;}
     quint32 getSamplingHz() const {return  samplingHz;}
-    quint32 getDelayUs() const {return  samplingHz;}
-    void setDelayUs(quint32 value) {samplingHz = value; emit delayUsChanged();}
+    quint32 getDelayUs() const {return  delayUs;}
+    void setDelayUs(quint32 value) {delayUs = value; emit delayUsChanged();}
 
     Q_INVOKABLE bool connect();
     Q_INVOKABLE void disconnect();
@@ -81,7 +81,9 @@ signals:
     void connectedChanged();
     void samplingHzChanged();
     void delayUsChanged();
+    void linkErrorHappen();
     void updatePath(qreal runTime);
+
 private:
 
     std::atomic<bool> running{false};

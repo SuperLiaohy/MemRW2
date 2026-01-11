@@ -5,10 +5,20 @@ import FluentUI
 
 FluFrame {
     id: frame
+
+    Connections {
+        target: Backend
+        function onLinkErrorHappen() {
+            connectBtn.clicked();
+            showError("A large number of communication errors occurred, resulting in automatic disconnection")
+        }
+    }
+
     RowLayout {
         anchors.fill: parent
         spacing: 10
         FluFilledButton {
+            id: connectBtn
             text: Backend.connected ? qsTr("断开") : qsTr("连接")
             Layout.preferredWidth: 65
             onClicked: {
@@ -37,9 +47,11 @@ FluFrame {
         }
         FluText{text:"delay: "}
         FluSlider {
-            Layout.preferredWidth: 50
+            Layout.preferredWidth: 100
             enabled: !Backend.running
+            opacity: enabled ? 1.0 : 0.5
             text: "us"
+            implicitWidth: 100
             from: 0; to: 10000
             value: 0
             stepSize: 50

@@ -349,6 +349,7 @@ void DAPReader::resetMap(const std::vector<DisplayPluginInterface *> &plugins) {
 int DAPReader::transferFromMapRequests() {
     usb->transmit(mapRequestBuf);
     usb->receive(response_buffer);
+    if (response_buffer.size()<3) return DAP::DAP_ERROR;
     if (response_buffer[0] != DAP_Transfer) return DAP::DAP_ERROR;
     if (response_buffer[2] != DAP::TRANSFER_OK) return response_buffer[2];
     if (response_buffer[1]!=(requestCount)) return DAP::DAP_ERROR;
@@ -360,13 +361,13 @@ int DAPReader::updateVari(std::vector<DisplayPluginInterface *> &plugins) {
     if (res!=DAP::TRANSFER_OK)return res;
     auto word = reinterpret_cast<all_form *>(&response_buffer[3]);
     std::size_t last = 0;
-    std::size_t index = 0;
+    std::size_t index = -1;
     for (auto item: addrMap) {
         auto base = item.first;
         auto vari = item.second;
         if (vari==nullptr)continue;
-        getData(vari,&word[index]);
         if (last!=base) {++index;}
+        getData(vari,&word[index]);
         last = base;
     }
     return DAP::TRANSFER_OK;

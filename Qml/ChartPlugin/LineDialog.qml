@@ -35,16 +35,16 @@ FluContentDialog {
 
     // ⭐ 预设颜色
     property var presetColors: [
-        "#409EFF", "#67C23A", "#E6A23C", "#F56C6C",
-        "#909399", "#C71585", "#FF4500", "#1E90FF",
-        "#32CD32", "#FF69B4", "#00CED1", "#FFD700"
+        "#409EFF", "#67C23A", "#e6893c", "#F56C6C",
+        "#909399", "#C71585", "#FF4500", "#ff1efb",
+        "#8032cd", "#FF69B4", "#00d1d1", "#FFD700"
     ]
 
     function openWithMode(model, object, openMode) {
         // 加载当前属性
         if (openMode === LineDialog.OpenMode.Add) {
             editName = object.name
-            editColor = "red"
+            editColor = Qt.rgba(Math.random(),Math.random(),Math.random(),1)
             editBufferSize = 5000
             console.log("Opening dialog for vari:", "name:", editName, "OpenMode: Add")
             mode = openMode
