@@ -13,7 +13,7 @@ void Backend::init() {
     samplingWorker = std::jthread([this](const std::stop_token& stoken) {
         bool started = false;
         clock.reset();
-        std::size_t fps = 0;
+        std::size_t Hz = 0;
         std::size_t everyFrame = 0;
         while (!stoken.stop_requested()) {
             requestHandler();
@@ -26,22 +26,27 @@ void Backend::init() {
                 daplink->resetMap(pluginContainer);
                 clearPluginData();
                 clock.reset();
+                everyFrame = 0;
+                Hz = 0;
                 started = true;
             }
 
             auto runTime = clock.runTime()/1000.0;
             daplink->updateVari(pluginContainer);
-            ++fps;
+            ++Hz;
             if (runTime-everyFrame>1000) {
                 everyFrame=runTime;
-                std::cout << "fps: " <<fps<<std::endl;
-                fps=0;
+                samplingHz = Hz;
+                emit samplingHzChanged();
+                std::cout << "Hz: " <<Hz<<std::endl;
+                Hz=0;
             }
 
 
             updatePlugin(runTime);
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            if (delayUs!=0) {
+                std::this_thread::sleep_for(std::chrono::microseconds(delayUs));
+            }
         }
     });
 }

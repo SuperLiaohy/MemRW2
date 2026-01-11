@@ -230,7 +230,7 @@ FluContentDialog {
                                 FluSlider {
                                     Layout.fillWidth: true
                                     from: 1000
-                                    to: 20000
+                                    to: 50000
                                     stepSize: 1000
                                     value: dialog.editBufferSize
                                     enabled: !dialog.running

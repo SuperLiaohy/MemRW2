@@ -41,6 +41,8 @@ class Backend : public QObject {
     QML_SINGLETON
     Q_PROPERTY(bool running READ getRunning WRITE setRunning NOTIFY runningChanged)
     Q_PROPERTY(bool connected READ getConnected NOTIFY connectedChanged)
+    Q_PROPERTY(quint32 samplingHz READ getSamplingHz NOTIFY samplingHzChanged)
+    Q_PROPERTY(quint32 delayUs READ getDelayUs WRITE setDelayUs NOTIFY delayUsChanged)
     Backend() : daplink(std::make_unique<DAPReader>()), variModel(std::make_unique<TreeModel>(std::make_shared<VariTree>())) {};
 public:
     static Backend& instance() {static Backend backend;return backend;}
@@ -55,7 +57,10 @@ public:
     void registerVariModel(const QQmlApplicationEngine&engine);
     bool getRunning() {return  running;}
     void setRunning(bool run) {running.store(run);emit runningChanged();}
-    bool getConnected() {return  connected;}
+    bool getConnected() const {return  connected;}
+    quint32 getSamplingHz() const {return  samplingHz;}
+    quint32 getDelayUs() const {return  samplingHz;}
+    void setDelayUs(quint32 value) {samplingHz = value; emit delayUsChanged();}
 
     Q_INVOKABLE bool connect();
     Q_INVOKABLE void disconnect();
@@ -74,11 +79,15 @@ public:
 signals:
     void runningChanged();
     void connectedChanged();
+    void samplingHzChanged();
+    void delayUsChanged();
     void updatePath(qreal runTime);
 private:
 
     std::atomic<bool> running{false};
     bool connected{false};
+    quint32 samplingHz{0};
+    quint32 delayUs{0};
     std::jthread samplingWorker;
     std::vector<DisplayPluginInterface*> pluginContainer;
     std::unique_ptr<DAPReader> daplink;

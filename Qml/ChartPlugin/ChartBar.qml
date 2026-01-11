@@ -105,12 +105,12 @@ FluFrame {
         Rectangle { width: 1; height: 25; color: FluTheme.dark ? "#444" : "#ddd" }
         // ⭐ 鼠标位置显示相对时间
         FluText {
-            text: "T: " + (frame.mouseInChart?frame.mouseXValue.toFixed(3):0)
+            text: "T: " + frame.mouseXValue.toFixed(3)
             font.pixelSize: 11
             color: FluTheme.dark ? "#888" : "#666"
         }
         FluText {
-            text: "V: " + (frame.mouseInChart?frame.mouseYValue.toFixed(3):0)
+            text: "V: " + frame.mouseYValue.toFixed(3)
             font.pixelSize: 11
             color: FluColors.Blue.normal
         }

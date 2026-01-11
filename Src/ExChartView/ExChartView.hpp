@@ -20,15 +20,16 @@ class ExLine {
 public:
     ExLine(quint32 cap):writeHandle(0),len(0),capacity(cap){buf.resize(cap);}
     bool deleteLater = false;
+    bool capacityLater = false;
     quint32 getLen() {return len;}
     quint32 getCapacity() {return capacity;}
-    void setCapacity(quint32 c) {buf.resize(c); clear(); capacity = c;}
+    void setCapacity(quint32 c) {buf.resize(c);capacityLater = true; clear(); capacity = c;}
     void write(const QPointF& point);
     void writeBuffer(const QVector<QPointF>& points);
     [[nodiscard]] QPointF at(quint32 index) const;
     void clear() {writeHandle=0,len=0;};
     std::pair<std::size_t,std::size_t> findBoundary(qreal viewXMin,qreal viewXMax);
-    std::size_t findPointIndex(qreal x);
+    QPointF findPointIndex(qreal x);
 };
 
 class ExChartView : public QQuickItem, public DisplayPluginInterface {
@@ -54,6 +55,8 @@ public:
     explicit ExChartView(QQuickItem* parent = nullptr);
     ~ExChartView();
     QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *) override;
+    void updatePolish() override;
+
     void switchBuf();
     void updatePath(qreal runTime);
     void updateData(qreal runTime) override;
@@ -84,6 +87,8 @@ public:
     void setViewYCenter(qreal value){ viewYCenter = value; emit viewYCenterChanged();}
     void setTargetFps(quint32 fps){ targetFps = fps; emit targetFpsChanged();}
     void setFlow(bool isFlow){ flow = isFlow; emit flowChanged();}
+
+    Q_INVOKABLE QVector<QPointF> findPoints(qreal x);
 
     void onAttrRemoved(int index);
     void onAttrPushed(const QString&name , const QString& type, std::size_t address, std::size_t size);

@@ -35,7 +35,30 @@ FluFrame {
                 Backend.running=!Backend.running
             }
         }
+        FluText{text:"delay: "}
+        FluSlider {
+            Layout.preferredWidth: 50
+            enabled: !Backend.running
+            text: "us"
+            from: 0; to: 10000
+            value: 0
+            stepSize: 50
+            onValueChanged: {
+                Backend.delayUs = value
+            }
+        }
+        FluText {
+            text: Backend.delayUs
+            Layout.preferredWidth: 18
+        }
+
         Item { Layout.fillWidth: true }
+        FluText {
+            text: "Hz: " + Backend.samplingHz
+            color: FluColors.Blue.normal
+            font.bold: true
+        }
+        Rectangle { width: 1; height: 25; color: FluTheme.dark ? "#444" : "#ddd" }
         FluText {
             text: Backend.running ? qsTr("● 采集中") : qsTr("○ 已暂停")
             color: Backend.running ? FluColors.Green.normal : FluColors.Orange.normal

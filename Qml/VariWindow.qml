@@ -30,26 +30,22 @@ FluSheet {
         anchors.top: parent.top  // 固定在顶部
         anchors.horizontalCenter: parent.horizontalCenter
 
-        MouseArea {
-            anchors.fill: parent
+
+        DragHandler {
             cursorShape: Qt.SizeVerCursor
-
-            property real startY: 0
-            property real startSize: sheet.height  // 用初始 size 或当前高度
-
-            onPressed: (mouse) => {
-                var point = mapToItem(null,mouse);
-                startY = point.y
-                startSize = sheet.height;
+            parent: sheet.header
+            xAxis.enabled: false
+            property real startHeight:sheet.height
+            onActiveChanged: {
+                if (active) {
+                    startHeight = sheet.height
+                } else {
+                    sheet.size = sheet.height
+                }
             }
-
-            onPositionChanged: (mouse) => {
-                var point = mapToItem(null,mouse);
-                var delY = startY - point.y
-                if (startSize+delY<sheet.maxSize)
-                    sheet.height = startSize+delY
-                else
-                    sheet.height = maxSize
+            onTranslationChanged: {
+                const newHeight = startHeight - translation.y
+                sheet.height = Math.max(Math.min(newHeight,maxSize),100)
             }
         }
     }

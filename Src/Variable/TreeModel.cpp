@@ -104,7 +104,7 @@ QModelIndex TreeModel::findNode(const QString &nodeSearchName) {
     qsizetype beginArray = 0;
     for (int i = 0; i < nodeSearchName.size(); ++i) {
         if (nodeSearchName[i]=='.') {
-            nodesName.append(nodeSearchName.mid(pos, i - pos));
+            if (i-pos!=0) nodesName.append(nodeSearchName.mid(pos, i - pos));
             pos = i+1;
         } else if (nodeSearchName[i]=='[') {
             nodesName.append(nodeSearchName.mid(pos, i - pos));
@@ -114,6 +114,9 @@ QModelIndex TreeModel::findNode(const QString &nodeSearchName) {
             nodesName.append(nodeSearchName.mid(beginArray, i - beginArray + 1));
             pos = i+1;
         }
+    }
+    if (pos < nodeSearchName.size()) {
+            nodesName.append(nodeSearchName.mid(pos, nodesName.size() - pos));
     }
     qDebug()<<nodesName;
     if (nodesName.isEmpty()) return QModelIndex();

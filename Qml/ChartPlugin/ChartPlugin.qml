@@ -41,6 +41,7 @@ FluFrame {
                 Layout.fillHeight: true
                 targetFps: chartBar.targetFps
                 flow: chartBar.flow
+                tipsVisible: chartBar.showCrosshair
                 running: Backend.running
             }
         }

@@ -64,17 +64,32 @@ std::pair<std::size_t, std::size_t> ExLine::findBoundary(qreal viewXMin, qreal v
     return {lowBound,highBound};
 }
 
-std::size_t ExLine::findPointIndex(qreal x) {
+QPointF ExLine::findPointIndex(qreal x) {
+    if (len==1) return at(0);
+    std::size_t low = 0, high = len;
+    if (at(0).x() >= x) return  at(0);
+    if (at(len-1).x() <= x) return  at(len-1);
+    while (low < high) {
+        std::size_t mid = low + (high - low) / 2;
+        if (at(mid).x() < x) {
+            low = mid + 1;
+        } else {
+            high = mid;
+        }
+    }
+    if (low==0) return at(0);
+    if (abs(at(low-1).x()-x)>abs(at(low).x()-x))return at(low);
+    return at(low-1);
 }
 
 ExChartView::ExChartView(QQuickItem *parent) : QQuickItem(parent), lineAttrModel(new LineAttrModel(this)), backBuf(&bufA) {
     setFlag(QQuickItem::ItemHasContents, true);
 
     for (auto & buf: bufA) {
-        buf.reserve(256);
+        buf.reserve(400);
     }
     for (auto & buf: bufB) {
-        buf.reserve(256);
+        buf.reserve(400);
     }
 
     connect(this,&ExChartView::timingUpdate,this,&ExChartView::updatePath);
@@ -145,6 +160,8 @@ QSGNode * ExChartView::updatePaintNode(QSGNode *qsg_node, UpdatePaintNodeData *u
             geom = node->geometry();
             auto mat = static_cast<QSGFlatColorMaterial *>(node->material());
             mat->setColor(lineAttrModel->lineAttrs[i]->config.color);
+        bool capacityLater;
+            if (lines[i].capacityLater) {geom->allocate(lines[i].getCapacity()); lines[i].capacityLater=false;}
             if (geom->vertexCount() != range) geom->setVertexCount(range);
         }
 
@@ -168,6 +185,18 @@ QSGNode * ExChartView::updatePaintNode(QSGNode *qsg_node, UpdatePaintNodeData *u
     return root;
 }
 
+void ExChartView::updatePolish() {
+    switchBuf();
+    auto& ready = *frontBuf;
+    for (int i = 0; i < lines.size(); ++i) {
+        lines[i].writeBuffer(ready[i]);
+        // lineAttrModel->lineAttrs[i]->view.pointsLen = lines[i].getLen();
+        lineAttrModel->setData(lineAttrModel->index(i),lines[i].getLen(),LineAttrModel::RoleNames::BufLenRole);
+        ready[i].clear();
+    }
+
+}
+
 void ExChartView::switchBuf() {
     QVector<PointBuf>* ready = backBuf.load();
     auto tmp = backBuf==&bufA?&bufB:&bufA;
@@ -176,19 +205,13 @@ void ExChartView::switchBuf() {
 }
 
 void ExChartView::updatePath(qreal runTime) {
-    auto& ready = *frontBuf;
-    for (int i = 0; i < lines.size(); ++i) {
-        lines[i].writeBuffer(ready[i]);
-        // lineAttrModel->lineAttrs[i]->view.pointsLen = lines[i].getLen();
-        lineAttrModel->setData(lineAttrModel->index(i),lines[i].getLen(),LineAttrModel::RoleNames::BufLenRole);
-        ready[i].clear();
-    }
     if (flow) {
         if (runTime>getViewXRange()) {
             setViewXMax(runTime);
             setViewXMin(runTime-getViewXRange());
         }
     }
+    polish();
     update();
 }
 
@@ -199,7 +222,6 @@ void ExChartView::updateData(qreal runTime) {
         buf.append(point);
     }
     if (runTime-lastUpdateTime>(1000/targetFps) || runTime<lastUpdateTime) {
-        switchBuf();
         emit timingUpdate(runTime);
         lastUpdateTime = runTime;
     }
@@ -215,6 +237,22 @@ void ExChartView::clearData() {
     setViewYMax(viewYCenter+viewYRange/2);
 }
 
+QVector<QPointF> ExChartView::findPoints(qreal x) {
+    QVector<QPointF> points;
+    auto xRange = viewXMax - viewXMin;
+    auto yRange = viewYMax - viewYMin;
+    auto w = width();
+    auto h = height();
+    for (auto & line: lines) {
+        if (line.getLen()==0) {points.append({0,0});continue;}
+        auto p = line.findPointIndex(x);
+        p.setX((p.x() - viewXMin)/xRange*w);
+        p.setY((viewYMax - p.y())/yRange*h);
+        points.append(p);
+    }
+    return points;
+}
+
 void ExChartView::onAttrRemoved(int index) {
     lines[index].deleteLater = true;
     update();
@@ -223,6 +261,8 @@ void ExChartView::onAttrRemoved(int index) {
 void ExChartView::onAttrPushed(const QString&name , const QString& type, std::size_t address, std::size_t size) {
     lines.append(ExLine{lineAttrModel->lineAttrs.last()->config.capacity});
     bufA.append(PointBuf{});
+    bufA.back().reserve(400);
     bufB.append(PointBuf{});
+    bufB.back().reserve(400);
     pushUnit(name ,type, address, size);
 }
