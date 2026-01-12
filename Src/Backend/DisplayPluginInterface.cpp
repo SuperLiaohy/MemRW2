@@ -29,6 +29,10 @@ void DisplayPluginInterface::pushUnit(const QString&name , const QString& type, 
     variContainer.push_back(vari);
 }
 
+void DisplayPluginInterface::pushUnit(const std::shared_ptr<VariComponent>& vari) {
+    variContainer.push_back(vari);
+}
+
 void DisplayPluginInterface::eraseUnit(int index) {
     variContainer.erase(variContainer.begin()+index);
 }

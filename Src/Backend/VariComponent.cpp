@@ -9,7 +9,11 @@
 VariComponent::VariComponent(const QString&name , const QString& type, std::size_t address, std::size_t size)  : active(true),
 name(name), size(size), address(address) {
     this->type = getTypeFromString(type);
-    qDebug()<<"name: "<<name << "size: "<<size<<"type: "<<getTypeName()<<"address: "<<address;
+    qDebug()<<"create: "<<"name: "<<name << "size: "<<size<<"type: "<<getTypeName()<<"address: "<<address;
+}
+
+VariComponent::~VariComponent() {
+    qDebug()<<"delete: "<<"name: "<<name << "size: "<<size<<"type: "<<getTypeName()<<"address: "<<address;
 }
 
 void VariComponent::updateFromModel(const QModelIndex &index) {

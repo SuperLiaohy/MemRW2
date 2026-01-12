@@ -15,12 +15,18 @@ class ExChartView;
 
 class Sync {
 public:
+    enum class Event {
+        UPDATE_VARI_EVENT,
+        WRITE_EVENT,
+        CLOSE_EVENT,
+    };
     Sync() = default;
     template<typename Callback>
-    void sendRequest(Callback fun) {sem_request.release();sem_response.acquire(); fun(); sem_resume.release();}
+    void sendRequest(Callback fun, Event e = Event::UPDATE_VARI_EVENT) {sem_request.release();sem_response.acquire(); fun(); sem_resume.release();}
     template<typename Callback>
-    void tryGetRequest(Callback fun) {if (sem_request.try_acquire()) {sem_response.release();sem_resume.acquire();fun();}}
+    void tryGetRequest(Callback fun) {if (sem_request.try_acquire()) {sem_response.release();sem_resume.acquire();fun(event);}}
 private:
+    Event event;
     std::binary_semaphore sem_request{0};     // A → B: 有请求了 (初始0)
     std::binary_semaphore sem_response{0};    // B → A: 已应答 (初始0)
     std::binary_semaphore sem_resume{0};      // A → B: 可以恢复运行了 (初始0)
@@ -74,6 +80,8 @@ public:
 
     void pushPlugin(DisplayPluginInterface *plugin);
     void erasePlugin(DisplayPluginInterface *plugin);
+
+    bool writeVari(VariComponent* vari, qreal value) {return daplink->writeValueToVari(vari, value);};
 
     QModelIndex findNode(const QString& nodeName) {return variModel->findNode(nodeName);};
 signals:

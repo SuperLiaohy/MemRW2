@@ -14,6 +14,7 @@ public:
     enum class Type { INT8, UINT8, INT16, UINT16, INT32, UINT32, INT64, UINT64, FLOAT, DOUBLE};
 
     VariComponent(const QString&name , const QString& type, std::size_t address, std::size_t size);
+    ~VariComponent();
 
     [[nodiscard]] const QString& getName() const {return name;}
     [[nodiscard]] std::size_t getSize() const {return size;}

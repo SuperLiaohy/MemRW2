@@ -27,7 +27,6 @@ FluFrame {
                 Layout.fillWidth: true
             }
             FluIconButton {
-                enabled: !frame.running
                 iconSource: FluentIcons.Add
                 iconSize: 11
                 onClicked: {

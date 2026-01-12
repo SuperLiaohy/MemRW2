@@ -7,7 +7,7 @@
 #include "Backend.hpp"
 #include "VariComponent.hpp"
 
-QStringList ExTableModel::headers{"name","read value", "write vaule","",""};
+QStringList ExTableModel::headers{"name","read value", "write vaule",""};
 
 ExTableModel::ExTableModel(QObject *parent) {
 }
@@ -23,7 +23,7 @@ int ExTableModel::rowCount(const QModelIndex &parent) const {
 }
 
 int ExTableModel::columnCount(const QModelIndex &parent) const {
-    return 5;
+    return headers.size();
 }
 
 QVariant ExTableModel::data(const QModelIndex &index, int role) const {
@@ -32,7 +32,7 @@ QVariant ExTableModel::data(const QModelIndex &index, int role) const {
 
     const auto &row = rowData[index.row()];
 
-    if (role == Qt::DisplayRole || role == Qt::EditRole)
+    if (role == Qt::DisplayRole)
     {
         switch (index.column())
         {
@@ -40,7 +40,6 @@ QVariant ExTableModel::data(const QModelIndex &index, int role) const {
             case 1: return QString::number(row.readValue, 'f', 5);
             case 2: return QString::number(row.writeValue, 'f', 5);
             case 3: return "";
-            case 4: return "";
             default: return QVariant();
         }
     }
@@ -48,7 +47,7 @@ QVariant ExTableModel::data(const QModelIndex &index, int role) const {
 }
 
 bool ExTableModel::setData(const QModelIndex &index, const QVariant &value, int role) {
-    if (!index.isValid() || role != Qt::EditRole)
+    if (!index.isValid())
         return false;
     auto &row = rowData[index.row()];
     switch (index.column())
@@ -69,12 +68,14 @@ bool ExTableModel::setData(const QModelIndex &index, const QVariant &value, int 
 Qt::ItemFlags ExTableModel::flags(const QModelIndex &index) const {
     if (!index.isValid())
         return Qt::NoItemFlags;
-
-    // 序号列和按钮列不可编辑
-    if (index.column() == 1 || index.column() == 3 || index.column() == 4)
-        return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
-
-    return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
+    return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
+    // // 序号列和按钮列不可编辑
+    // if (index.column() == 3) return Qt::ItemIsEnabled;
+    // if (index.column() == 2) return Qt::ItemIsEnabled|Qt::ItemIsEditable;
+    // if (index.column() == 1)
+    //     return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+    //
+    // return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
 }
 
 QVariant ExTableModel::headerData(int section, Qt::Orientation orientation, int role) const {
@@ -99,17 +100,31 @@ void ExTableModel::updateData(qreal runTime) {
 
 void ExTableModel::appendRow(const QString &name,const QString&variName , const QString& type, std::size_t address, std::size_t size) {
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
-    rowData.emplace_back(TableVari{name, 0, 0});
-    pushUnit(variName ,type, address, size);
+    auto vari = std::make_shared<VariComponent>(name,type,address,size);
+    Backend::instance().sync.sendRequest([this, &vari, &name]() {
+        rowData.emplace_back(TableVari{name, 0, 0});
+        pushUnit(vari);
+    });
     endInsertRows();
 }
 
 void ExTableModel::removeRow(int row) {
     if (rowData.isEmpty()) return;
     beginRemoveRows(QModelIndex(), row, row);
-    rowData.remove(row);
+    qDebug()<<row;
     Backend::instance().sync.sendRequest([this,row]() {
+        rowData.remove(row);
         eraseUnit(row);
     });
     endRemoveRows();
+}
+
+bool ExTableModel::sendWriteRequest(int row) {
+    bool res = true;
+    Backend::instance().sync.sendRequest([this,row,&res]() {
+        auto& vari = variContainer[row];
+        auto value = rowData[row].writeValue;
+        res = Backend::instance().writeVari(vari.get(),value);
+    },Sync::Event::WRITE_EVENT);
+    return res;
 }

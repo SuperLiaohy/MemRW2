@@ -94,9 +94,18 @@ QStringList Backend::reloadVari() {
 }
 
 void Backend::requestHandler() {
-    sync.tryGetRequest([this]() {
+    sync.tryGetRequest([this](Sync::Event e) {
         qDebug() << "handle request";
-        daplink->resetMap(pluginContainer);
+        switch (e) {
+            case Sync::Event::UPDATE_VARI_EVENT:
+                daplink->resetMap(pluginContainer);
+                break;
+            case Sync::Event::WRITE_EVENT:
+
+                break;
+            case Sync::Event::CLOSE_EVENT:
+                break;
+        }
     });
 }
 

@@ -10,11 +10,11 @@ Item {
     property string panel1Title: "面板 1"
     property Component panel1Content: null
 
-    property string panel2Title:  "面板 2"
+    property string panel2Title: "面板 2"
     property Component panel2Content: null
 
     // ===== 内部状态 =====
-    property bool panel1Docked:  true
+    property bool panel1Docked: true
     property bool panel2Docked:  true
     property int currentTab: 0
     property string layoutMode: "tabbed"
@@ -23,6 +23,8 @@ Item {
     property string draggingTitle: ""
     property real dragX: 0
     property real dragY:  0
+
+    property real splitRatio: 0.5
 
     readonly property int dockedCount: (panel1Docked ? 1 :  0) + (panel2Docked ? 1 :  0)
 
@@ -48,7 +50,7 @@ Item {
                     text: root.draggingTitle
                     color:  "#fff"
                     font.pixelSize: 12
-                    font. bold: true
+                    font.bold: true
                 }
             }
 
@@ -68,7 +70,7 @@ Item {
     }
 
     Item {
-        id:  panel2Instance
+        id: panel2Instance
         visible: false
         Loader {
             anchors.fill: parent
@@ -76,7 +78,7 @@ Item {
         }
     }
 
-    // ===== 两个浮动窗口（预创建）=====
+    // ===== 两个浮动窗口 =====
     Window {
         id:  floatWindow1
         width: 800
@@ -86,15 +88,14 @@ Item {
         color: FluTheme.dark ? "#2a2a2a" : "#f5f5f5"
 
         onClosing: function(close) {
-            close. accepted = false
+            close.accepted = false
             root. dockPanel(0)
         }
 
         FluFrame {
             anchors.fill: parent
-            anchors. margins: 8
+            anchors.margins: 8
 
-            // 停靠按钮
             Rectangle {
                 width: 28
                 height: 28
@@ -106,8 +107,8 @@ Item {
                 Text {
                     anchors.centerIn: parent
                     text: "⇲"
-                    color: FluTheme.dark ? "#fff" : "#333"
-                    font. pixelSize: 14
+                    color: FluTheme.dark ? "#fff" :  "#333"
+                    font.pixelSize: 14
                 }
 
                 MouseArea {
@@ -125,7 +126,7 @@ Item {
 
             Item {
                 id:  floatContent1
-                anchors. fill: parent
+                anchors.fill: parent
                 anchors.topMargin: 36
             }
         }
@@ -148,7 +149,6 @@ Item {
             anchors.fill: parent
             anchors. margins: 8
 
-            // 停靠按钮
             Rectangle {
                 width: 28
                 height: 28
@@ -266,11 +266,11 @@ Item {
         Item {
             id: contentArea
             anchors.top: tabBar.bottom
-            anchors. left: parent.left
-            anchors. right: parent.right
-            anchors. bottom: parent.bottom
-            anchors. margins: 8
-            anchors.topMargin: 4
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.margins: 8
+            anchors. topMargin: 4
 
             // 空状态
             Rectangle {
@@ -295,7 +295,7 @@ Item {
                 visible: root.layoutMode === "tabbed" && root.dockedCount > 0
 
                 PanelContainer {
-                    id: tabbedContainer1
+                    id:  tabbedContainer1
                     anchors.fill: parent
                     visible: root.panel1Docked && (root.currentTab === 0 || ! root.panel2Docked)
                 }
@@ -308,50 +308,88 @@ Item {
             }
 
             // 水平并列
-            Row {
+            Item {
                 anchors.fill: parent
-                spacing: 6
-                visible: root. layoutMode === "horizontal" && root. dockedCount > 0
+                visible:  root.layoutMode === "horizontal" && root.dockedCount > 0
 
                 PanelContainer {
                     id: horizContainer1
                     visible: root.panel1Docked
-                    width: root. dockedCount === 2 ? (parent.width - 6) / 2 : parent.width
-                    height: parent.height
+                    anchors. left: parent.left
+                    anchors.top: parent.top
+                    anchors. bottom: parent.bottom
+                    width: root. dockedCount === 2 ? parent.width * root.splitRatio - 3 : parent.width
                     panelTitle: root. panel1Title
                     showTitle: true
                 }
 
+                // 水平拖拽条
+                DragHandle {
+                    id: horizHandle
+                    visible: root. dockedCount === 2
+                    anchors.top: parent.top
+                    anchors. bottom: parent.bottom
+                    x: parent.width * root.splitRatio - 3
+                    width: 6
+                    orientation: Qt.Horizontal
+
+                    onDragMove: function(delta) {
+                        var newRatio = root.splitRatio + delta / contentArea.width
+                        root.splitRatio = Math.max(0.2, Math.min(0.8, newRatio))
+                    }
+                }
+
                 PanelContainer {
                     id: horizContainer2
-                    visible:  root.panel2Docked
-                    width: root. dockedCount === 2 ? (parent. width - 6) / 2 :  parent.width
-                    height: parent. height
-                    panelTitle: root. panel2Title
-                    showTitle: true
+                    visible: root.panel2Docked
+                    anchors.right: parent.right
+                    anchors. top: parent.top
+                    anchors.bottom: parent. bottom
+                    width: root.dockedCount === 2 ? parent.width * (1 - root. splitRatio) - 3 : parent.width
+                    panelTitle: root.panel2Title
+                    showTitle:  true
                 }
             }
 
             // 垂直并列
-            Column {
+            Item {
                 anchors.fill: parent
-                spacing: 6
-                visible:  root.layoutMode === "vertical" && root.dockedCount > 0
+                visible: root.layoutMode === "vertical" && root. dockedCount > 0
 
                 PanelContainer {
                     id: vertContainer1
                     visible: root.panel1Docked
-                    width: parent.width
-                    height: root. dockedCount === 2 ? (parent. height - 6) / 2 :  parent.height
-                    panelTitle:  root.panel1Title
-                    showTitle: true
+                    anchors.left: parent.left
+                    anchors. right: parent.right
+                    anchors. top: parent.top
+                    height:  root.dockedCount === 2 ?  parent.height * root.splitRatio - 3 : parent.height
+                    panelTitle: root.panel1Title
+                    showTitle:  true
+                }
+
+                // 垂直拖拽条
+                DragHandle {
+                    id:  vertHandle
+                    visible: root. dockedCount === 2
+                    anchors.left: parent.left
+                    anchors. right: parent.right
+                    y: parent.height * root.splitRatio - 3
+                    height: 6
+                    orientation:  Qt.Vertical
+
+                    onDragMove: function(delta) {
+                        var newRatio = root.splitRatio + delta / contentArea.height
+                        root.splitRatio = Math.max(0.2, Math.min(0.8, newRatio))
+                    }
                 }
 
                 PanelContainer {
-                    id: vertContainer2
-                    visible:  root.panel2Docked
-                    width: parent.width
-                    height:  root.dockedCount === 2 ?  (parent.height - 6) / 2 : parent. height
+                    id:  vertContainer2
+                    visible: root. panel2Docked
+                    anchors.left: parent.left
+                    anchors. right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: root.dockedCount === 2 ? parent.height * (1 - root.splitRatio) - 3 : parent. height
                     panelTitle: root. panel2Title
                     showTitle: true
                 }
@@ -426,12 +464,12 @@ Item {
             if (c1) {
                 panel1Instance.parent = c1.contentItem
                 panel1Instance.anchors.fill = c1.contentItem
-                panel1Instance.visible = true
+                panel1Instance. visible = true
             }
         } else {
             panel1Instance.parent = floatContent1
-            panel1Instance.anchors. fill = floatContent1
-            panel1Instance.visible = true
+            panel1Instance. anchors.fill = floatContent1
+            panel1Instance. visible = true
         }
 
         if (panel2Docked) {
@@ -456,11 +494,11 @@ Item {
     // ===== 子组件 =====
 
     component TabButton:  Rectangle {
-        id: tabBtn
+        id:  tabBtn
         width: Math.max(80, tabText.implicitWidth + 24)
         height: 28
         radius: 4
-        color:  isActive ? (FluTheme. dark ? "#3a3a3a" : "#e8e8e8") :
+        color: isActive ? (FluTheme. dark ? "#3a3a3a" : "#e8e8e8") :
             (tabArea.containsMouse ?  (FluTheme.dark ? "#4a4a4a" : "#d0d0d0") : (FluTheme. dark ? "#2e2e2e" : "#f0f0f0"))
         border.color: isActive ? FluTheme.primaryColor : (FluTheme.dark ? "#444" :  "#ddd")
         border.width: isActive ? 1 : 0
@@ -476,7 +514,7 @@ Item {
             id:  tabText
             anchors.centerIn: parent
             text:  tabBtn.title
-            color: tabBtn.isActive ? (FluTheme. dark ? "#fff" : "#333") : (FluTheme.dark ? "#888" : "#666")
+            color: tabBtn.isActive ?  (FluTheme.dark ? "#fff" : "#333") : (FluTheme.dark ? "#888" : "#666")
             font.pixelSize: 12
         }
 
@@ -496,18 +534,18 @@ Item {
             onPositionChanged: function(e) {
                 if (! pressed) return
                 var d = Math.sqrt(Math.pow(e.x - startPos.x, 2) + Math.pow(e.y - startPos.y, 2))
-                var gp = mapToGlobal(e.x, e. y)
+                var gp = mapToGlobal(e.x, e.y)
                 if (d > 20 && !dragging) {
                     dragging = true
-                    tabBtn.dragStarted(gp.x, gp.y)
+                    tabBtn.dragStarted(gp. x, gp. y)
                 }
-                if (dragging) tabBtn.dragMoved(gp.x, gp.y)
+                if (dragging) tabBtn.dragMoved(gp. x, gp. y)
             }
 
             onReleased: function(e) {
                 if (dragging) {
-                    var gp = mapToGlobal(e.x, e. y)
-                    tabBtn.dragEnded(gp. x, gp. y)
+                    var gp = mapToGlobal(e. x, e.y)
+                    tabBtn.dragEnded(gp.x, gp.y)
                 } else {
                     tabBtn.clicked()
                 }
@@ -517,7 +555,7 @@ Item {
     }
 
     component PanelContainer: Item {
-        property string panelTitle: ""
+        property string panelTitle:  ""
         property bool showTitle: false
         property alias contentItem: contentArea
 
@@ -530,25 +568,25 @@ Item {
         }
 
         Rectangle {
-            id:  titleRect
+            id: titleRect
             width:  parent.width
             height: showTitle ?  32 : 0
-            visible:  showTitle
-            color: FluTheme.dark ? "#323232" : "#ebebeb"
+            visible: showTitle
+            color:  FluTheme. dark ? "#323232" : "#ebebeb"
             radius: 4
 
             Rectangle {
-                anchors.bottom: parent.bottom
-                width: parent. width
-                height:  4
+                anchors.bottom: parent. bottom
+                width:  parent.width
+                height: 4
                 color: parent.color
             }
 
             Text {
                 anchors.centerIn: parent
-                text:  panelTitle
-                color: FluTheme.dark ? "#fff" : "#333"
-                font. pixelSize: 12
+                text: panelTitle
+                color: FluTheme.dark ? "#fff" :  "#333"
+                font.pixelSize: 12
                 font.bold: true
             }
         }
@@ -561,6 +599,43 @@ Item {
             anchors.bottom: parent.bottom
             anchors.margins: 6
             anchors. topMargin: showTitle ? 4 : 6
+        }
+    }
+
+    component DragHandle: Rectangle {
+        id: handle
+        color: handleArea.containsMouse || handleArea.pressed ? FluTheme.primaryColor : (FluTheme. dark ? "#555" : "#ccc")
+        radius: 2
+
+        property int orientation: Qt.Horizontal
+        signal dragMove(real delta)
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: handle.orientation === Qt.Horizontal ?  2 : 20
+            height: handle.orientation === Qt. Horizontal ? 20 : 2
+            radius: 1
+            color: FluTheme.dark ? "#888" : "#999"
+        }
+
+        MouseArea {
+            id: handleArea
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: handle.orientation === Qt. Horizontal ? Qt. SplitHCursor : Qt.SplitVCursor
+
+            property real startPos: 0
+
+            onPressed: function(e) {
+                startPos = handle.orientation === Qt.Horizontal ? e.x : e.y
+            }
+
+            onPositionChanged: function(e) {
+                if (!pressed) return
+                var currentPos = handle.orientation === Qt.Horizontal ? e.x :  e.y
+                var delta = currentPos - startPos
+                handle.dragMove(delta)
+            }
         }
     }
 }

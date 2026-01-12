@@ -43,6 +43,7 @@ public:
     // 自定义接口 - 供 QML 调用
     Q_INVOKABLE void appendRow(const QString &name,const QString&variName , const QString& type, std::size_t address, std::size_t size);
     Q_INVOKABLE void removeRow(int row);
+    Q_INVOKABLE bool sendWriteRequest(int row);
 
 
     [[nodiscard]] quint32 getTargetFps() const{ return targetFps;}

@@ -129,16 +129,18 @@ FluFrame {
                 anchors.fill: parent
                 property var points: chartView.findPoints(hoverHandler.mouseXValue)
                 delegate : Item{
+                    id: controlItem
                     visible: model.visible
                     anchors.fill: parent
+                    property bool valid: (index < tipsInfo.points.length && index>=0)
                     Rectangle {
                         id: tipPoint
                         width: 10
                         height: width
                         radius: width / 2
                         color: model.color
-                        x: (index < tipsInfo.points.length && index>=0) ? tipsInfo.points[index].x - width/2 : 0
-                        y: (index < tipsInfo.points.length && index>=0) ? tipsInfo.points[index].y - height/2 : 0
+                        x: controlItem.valid ? tipsInfo.points[index].x - width/2 : 0
+                        y: controlItem.valid ? tipsInfo.points[index].y - height/2 : 0
                     }
                     Item {
                         x: hoverHandler.point.position.x + 25
@@ -153,7 +155,7 @@ FluFrame {
                             FluText {
                                 leftPadding: 8
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: model.name + ": " + (chartView.viewYMax-tipPoint.y/chartView.height*(chartView.viewYMax-chartView.viewYMin)).toFixed(3)
+                                text: model.name + ": " + (controlItem.valid?(chartView.viewYMax-tipsInfo.points[index].y/chartView.height*(chartView.viewYMax-chartView.viewYMin)).toFixed(3):0)
                                 font.pixelSize: 10
                                 font.bold: true
                                 color: FluTheme.dark ?  "#ddd" : "#333"
@@ -409,14 +411,15 @@ FluFrame {
         }
 
         onPositiveClicked: {
-            parent.forceActiveFocus()
-            chartView.viewXRange = chartDialog.editXRange
-            chartView.viewXCenter = chartDialog.editXCenter
-            chartView.viewYRange = chartDialog.editYRange
-            chartView.viewYCenter = chartDialog.editYCenter
-            frame.xGrid = chartDialog.editXGrid
-            frame.yGrid = chartDialog.editYGrid
-            showSuccess(qsTr("Save Settings"))
+            Qt. callLater(function() {
+                chartView.viewXRange = chartDialog.editXRange
+                chartView.viewXCenter = chartDialog.editXCenter
+                chartView.viewYRange = chartDialog.editYRange
+                chartView.viewYCenter = chartDialog.editYCenter
+                frame.xGrid = chartDialog.editXGrid
+                frame.yGrid = chartDialog.editYGrid
+                showSuccess(qsTr("Save Settings"))
+            })
         }
     }
 

@@ -186,6 +186,17 @@ QSGNode * ExChartView::updatePaintNode(QSGNode *qsg_node, UpdatePaintNodeData *u
 }
 
 void ExChartView::updatePolish() {
+
+}
+
+void ExChartView::switchBuf() {
+    QVector<PointBuf>* ready = backBuf.load();
+    auto tmp = backBuf==&bufA?&bufB:&bufA;
+    backBuf.store(tmp);
+    frontBuf.store(ready);
+}
+
+void ExChartView::updatePath(qreal runTime) {
     switchBuf();
     auto& ready = *frontBuf;
     for (int i = 0; i < lines.size(); ++i) {
@@ -200,18 +211,6 @@ void ExChartView::updatePolish() {
             setViewXMin(runTime-getViewXRange());
         }
     }
-}
-
-void ExChartView::switchBuf() {
-    QVector<PointBuf>* ready = backBuf.load();
-    auto tmp = backBuf==&bufA?&bufB:&bufA;
-    backBuf.store(tmp);
-    frontBuf.store(ready);
-}
-
-void ExChartView::updatePath(qreal t) {
-    runTime = runTime;
-    polish();
     update();
 }
 
@@ -260,9 +259,13 @@ void ExChartView::onAttrRemoved(int index) {
 
 void ExChartView::onAttrPushed(const QString&name , const QString& type, std::size_t address, std::size_t size) {
     lines.append(ExLine{lineAttrModel->lineAttrs.last()->config.capacity});
-    bufA.append(PointBuf{});
-    bufA.back().reserve(400);
-    bufB.append(PointBuf{});
-    bufB.back().reserve(400);
-    pushUnit(name ,type, address, size);
+    auto vari = std::make_shared<VariComponent>(name,type,address,size);
+    Backend::instance().sync.sendRequest([this,&vari]() {
+        bufA.append(PointBuf{});
+        bufA.back().reserve(400);
+        bufB.append(PointBuf{});
+        bufB.back().reserve(400);
+        pushUnit(vari);
+    });
+
 }

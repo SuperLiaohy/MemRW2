@@ -169,11 +169,24 @@ void DAPReader::attach_to_target() {
     std::cout << "failed to power up debug interface domain." << std::endl;
 }
 
-uint32_t DAPReader::read_mem(uint32_t addr) {
+uint32_t DAPReader::read_mem32(uint32_t addr) {
     DAP::TransferResponse response{};
     std::vector<DAP::TransferResponse> responses(2);
     this->transfer({APWriteRequest(SW::MEM_AP::TAR, addr), APReadRequest(SW::MEM_AP::DRW)}, responses);
     return responses[1].bit_data.u32;
+}
+
+void DAPReader::write_mem8(uint32_t addr, uint8_t data) {
+
+}
+
+void DAPReader::write_mem16(uint32_t addr, uint16_t data) {
+}
+
+void DAPReader::write_mem32(uint32_t addr, uint32_t data) {
+}
+
+void DAPReader::write_mem64(uint32_t addr, uint64_t data) {
 }
 
 void DAPReader::auto_configure_ap() {
@@ -298,10 +311,11 @@ int DAPReader::transfer(const std::vector<DAP::TransferRequest> &requests,
         }
     }
     request_buffer.resize(3 + index);
-    usb->transmit(request_buffer);
-
     response_buffer.resize(response_buffer.capacity());
+
+    usb->transmit(request_buffer);
     usb->receive(response_buffer);
+
     if (response_buffer[0] != DAP_Transfer) return DAP::DAP_ERROR;
     uint8_t TransferCount = response_buffer[1];
     uint32_t *word = reinterpret_cast<uint32_t *>(&response_buffer[3]);
@@ -533,3 +547,91 @@ void DAPReader::getData(VariComponent *vari, all_form *words) {
                 break;
         }
 }
+
+bool DAPReader::writeValueToVari(VariComponent *vari, double value) {
+    auto offset = vari->getAddress()&0x03;
+    auto base = vari->getAddress()-offset;
+    std::vector<DAP::TransferRequest> reg_request;
+    std::vector<DAP::TransferResponse> reg_responses(4);
+    reg_request.reserve(4);
+    volatile all_form data;
+    data.u32 = 0;
+    switch (vari->getType()) {
+        case VariComponent::Type::INT8: {
+            DAPReader::sw.ap.csw->Size = 0b000;
+            data.i8[offset] = static_cast<int8_t>(value);
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::TAR, vari->getAddress()));
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::DRW, data.u32));
+            DAPReader::sw.ap.csw->Size = 0b010;
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
+        }
+            break;
+        case VariComponent::Type::UINT8: {
+            DAPReader::sw.ap.csw->Size = 0b000;
+            data.u8[offset] = static_cast<uint8_t>(value);
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::TAR, vari->getAddress()));
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::DRW, data.u32));
+            DAPReader::sw.ap.csw->Size = 0b010;
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
+        }
+            break;
+        case VariComponent::Type::INT16: {
+            if (offset==1||offset==3) return false;
+            DAPReader::sw.ap.csw->Size = 0b001;
+            data.i16[offset/2] = static_cast<int16_t>(value);
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::TAR, vari->getAddress()));
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::DRW, data.u32));
+            DAPReader::sw.ap.csw->Size = 0b010;
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
+        }
+            break;
+        case VariComponent::Type::UINT16:{
+            if (offset==1||offset==3) return false;
+            DAPReader::sw.ap.csw->Size = 0b001;
+            data.i16[offset/2] = static_cast<uint16_t>(value);
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::TAR, vari->getAddress()));
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::DRW, data.u32));
+            DAPReader::sw.ap.csw->Size = 0b010;
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
+        }
+            break;
+        case VariComponent::Type::INT32: {
+            if (offset!=0) return false;
+            data.i32 = static_cast<int32_t>(value);
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::TAR, vari->getAddress()));
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::DRW, data.u32));
+        }
+            break;
+        case VariComponent::Type::UINT32: {
+            if (offset!=0) return false;
+            data.u32 = static_cast<uint32_t>(value);
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::TAR, vari->getAddress()));
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::DRW, data.u32));
+        }break;
+        case VariComponent::Type::INT64:
+            return false;
+            break;
+        case VariComponent::Type::UINT64:
+            return false;
+            break;
+        case VariComponent::Type::FLOAT:
+            if (offset!=0) return false;
+            data.f32 = static_cast<float>(value);
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::TAR, vari->getAddress()));
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::DRW, data.u32));
+            break;
+        case VariComponent::Type::DOUBLE:
+            return false;
+            break;
+    }
+    if (transfer(reg_request,reg_responses)!=DAP::TRANSFER_OK) {
+        qDebug()<<"transfer failed,write failed.";
+        return false;
+    }
+    return true;
+}
+

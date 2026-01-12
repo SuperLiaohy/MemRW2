@@ -20,6 +20,8 @@ public:
     QStringList reloadVari();
 
     void pushUnit(const QString&name , const QString& type, std::size_t address, std::size_t size);
+    void pushUnit(const std::shared_ptr<VariComponent>& vari);
+
     void eraseUnit(int index);
     void eraseUnits(QSet<int>& indexes);
     void eraseAll(QSet<int>& indexes);

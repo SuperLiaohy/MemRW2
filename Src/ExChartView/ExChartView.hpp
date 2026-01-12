@@ -122,7 +122,6 @@ private:
     quint32 frameCount=0;
     quint32 realFps=0;
     bool flow = true;
-    qreal runTime;
 
     QVector<ExLine> lines;
     LineAttrModel* lineAttrModel;

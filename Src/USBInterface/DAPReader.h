@@ -106,7 +106,12 @@ public:
     void auto_configure_ap();
     int dap_connect(uint8_t port);
 
-    uint32_t read_mem(uint32_t addr);
+    uint32_t read_mem32(uint32_t addr);
+
+    void write_mem8(uint32_t addr, uint8_t data);
+    void write_mem16(uint32_t addr, uint16_t data);
+    void write_mem32(uint32_t addr, uint32_t data);
+    void write_mem64(uint32_t addr, uint64_t data);
 
     int set_swj_clock(uint32_t clock);
     int set_swj_sequence(const uint8_t *sequence, uint8_t len);
@@ -130,6 +135,8 @@ public:
     static DAP::TransferRequest DPReadRequest(uint8_t reg, uint32_t data = 0, uint8_t TimeStamp = 0,uint8_t ValueMatch = 0) {
         return Request(0, 1, reg, ValueMatch, 0, TimeStamp, data);
     }
+
+    bool writeValueToVari(VariComponent* vari,double value);
 
     void resetMap(const std::vector<DisplayPluginInterface*>& plugins);
     int updateVari(std::vector<DisplayPluginInterface*>& plugins);

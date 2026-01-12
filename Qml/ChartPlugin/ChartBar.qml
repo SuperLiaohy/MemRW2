@@ -6,6 +6,7 @@ import FluentUI
 FluFrame {
     id: frame
     padding: 10
+    clip: true
 
     // expose to control
     property bool showLineList: true
@@ -48,8 +49,8 @@ FluFrame {
         Rectangle { width: 1; Layout.fillHeight: true; color: FluTheme.dark ? "#444" : "#ddd" }
         FluText { text: "Target FPS:" }
         FluSlider {
-            from: 15; to: 80
-            value: frame.targetFps
+            from: 15; to: 120
+            value: 30
             stepSize: 1
             Layout.preferredWidth: 50
             onValueChanged: {
