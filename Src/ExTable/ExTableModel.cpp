@@ -15,7 +15,7 @@ ExTableModel::ExTableModel(QObject *parent) {
 ExTableModel::~ExTableModel() {
     Backend::instance().sync.sendRequest([]() {
         Backend::instance().setRunning(false);
-    });
+    },Sync::Event::CLOSE_EVENT);
 }
 
 int ExTableModel::rowCount(const QModelIndex &parent) const {
@@ -88,7 +88,7 @@ QVariant ExTableModel::headerData(int section, Qt::Orientation orientation, int 
     return QVariant();
 }
 
-void ExTableModel::updateData(qreal runTime) {
+void ExTableModel::onPluginRunning(qreal runTime) {
     if (runTime-lastUpdateTime>(1000/targetFps) || runTime<lastUpdateTime) {
         lastUpdateTime = runTime;
         for (int i = 0; i < rowData.size(); ++i) {

@@ -37,8 +37,7 @@ public:
     Qt::ItemFlags flags(const QModelIndex &index) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
-    void updateData(qreal runTime) override;
-    void clearData() override {};
+    void onPluginRunning(qreal runTime) override;
 
     // 自定义接口 - 供 QML 调用
     Q_INVOKABLE void appendRow(const QString &name,const QString&variName , const QString& type, std::size_t address, std::size_t size);

@@ -75,8 +75,9 @@ public:
     Sync sync{};
     Clock clock{};
     void requestHandler();
-    void updatePlugin(qreal runTime);
-    void clearPluginData();
+    void pluginsRunning(qreal runTime);
+    void pluginsStart();
+    void pluginsEnd();
 
     void pushPlugin(DisplayPluginInterface *plugin);
     void erasePlugin(DisplayPluginInterface *plugin);

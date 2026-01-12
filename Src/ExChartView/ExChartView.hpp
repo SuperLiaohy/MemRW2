@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <qfile.h>
 #include <QQuickPaintedItem>
 #include <QQuickItem>
 
@@ -51,6 +52,9 @@ class ExChartView : public QQuickItem, public DisplayPluginInterface {
 
     Q_PROPERTY(bool flow READ getFlow WRITE setFlow NOTIFY flowChanged)
 
+    Q_PROPERTY(bool log READ getLog WRITE setLog NOTIFY logChanged)
+    Q_PROPERTY(QString logFile READ getLogFile WRITE setLogFile NOTIFY logFileChanged)
+
 public:
     explicit ExChartView(QQuickItem* parent = nullptr);
     ~ExChartView();
@@ -59,8 +63,9 @@ public:
 
     void switchBuf();
     void updatePath(qreal t);
-    void updateData(qreal runTime) override;
-    void clearData() override;
+    void onPluginRunning(qreal runTime) override;
+    void onPluginStart() override;
+    void onPluginEnd() override;
     LineAttrModel *getLineAttrModel() {return lineAttrModel;}
     std::atomic<QVector<PointBuf>*> backBuf;
     std::atomic<QVector<PointBuf>*> frontBuf;
@@ -76,6 +81,8 @@ public:
     [[nodiscard]] quint32 getTargetFps() const{ return targetFps;}
     [[nodiscard]] quint32 getRealFps() const{ return realFps;}
     [[nodiscard]] bool getFlow() const{ return flow;}
+    [[nodiscard]] bool getLog() const{ return log;}
+    [[nodiscard]] QString getLogFile() const{ return logFile;}
 
     void setViewXMax(qreal value){viewXMax = value; emit viewXMaxChanged();}
     void setViewXMin(qreal value){viewXMin = value; emit viewXMinChanged();}
@@ -87,6 +94,8 @@ public:
     void setViewYCenter(qreal value){ viewYCenter = value; emit viewYCenterChanged();}
     void setTargetFps(quint32 fps){ targetFps = fps; emit targetFpsChanged();}
     void setFlow(bool isFlow){ flow = isFlow; emit flowChanged();}
+    void setLog(bool isLog){ log = isLog; emit logChanged();}
+    void setLogFile(QString file){ logFile = file; emit logFileChanged();}
 
     Q_INVOKABLE QVector<QPointF> findPoints(qreal x);
 
@@ -105,6 +114,9 @@ signals:
     void targetFpsChanged();
     void realFpsChanged();
     void flowChanged();
+    void logChanged();
+    void logFileChanged();
+    void logFileErrorHappen();
     void timingUpdate(qreal runTime);
 private:
     friend bool LineAttrModel::setData(const QModelIndex &index, const QVariant &value, int role);
@@ -122,6 +134,9 @@ private:
     quint32 frameCount=0;
     quint32 realFps=0;
     bool flow = true;
+    bool log = false;
+    QString logFile;
+    QFile logfile;
 
     QVector<ExLine> lines;
     LineAttrModel* lineAttrModel;

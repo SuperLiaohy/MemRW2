@@ -101,7 +101,10 @@ ExChartView::ExChartView(QQuickItem *parent) : QQuickItem(parent), lineAttrModel
 }
 
 ExChartView::~ExChartView() {
-    Backend::instance().sync.sendRequest([](){Backend::instance().setRunning(false);});
+    Backend::instance().sync.sendRequest([this]() {
+        if (logfile.isOpen()) logfile.close();
+        Backend::instance().setRunning(false);
+    },Sync::Event::CLOSE_EVENT);
 }
 
 QSGNode * ExChartView::updatePaintNode(QSGNode *qsg_node, UpdatePaintNodeData *update_paint_node_data) {
@@ -134,6 +137,14 @@ QSGNode * ExChartView::updatePaintNode(QSGNode *qsg_node, UpdatePaintNodeData *u
             idx=0;
             erase_if(bufB, [&deleteIndexes,&idx](auto&){return deleteIndexes.contains(idx++);});
             eraseUnits(deleteIndexes);
+            if (log&&Backend::instance().getRunning()) {
+                QTextStream logstream(&logfile);
+                logstream << '\n';
+                for (auto &vari: variContainer) {
+                    logstream << vari->getName()<<',';
+                }
+                logstream <<"timestamp"<< '\n';
+            }
         });
     }
     std::size_t lowBound=0,highBound=0,range=0;
@@ -214,11 +225,21 @@ void ExChartView::updatePath(qreal runTime) {
     update();
 }
 
-void ExChartView::updateData(qreal runTime) {
+void ExChartView::onPluginRunning(qreal runTime) {
     int index = 0;
-    for (auto & buf: *backBuf) {
-        auto point = QPointF(runTime,variContainer[index++]->fValue);
-        buf.append(point);
+    if (log) {
+        QTextStream logstream(&logfile);
+        for (auto & buf: *backBuf) {
+            auto point = QPointF(runTime,variContainer[index++]->fValue);
+            logstream << point.y()<< ',';
+            buf.append(point);
+        }
+        logstream<<runTime<<'\n';
+    } else {
+        for (auto & buf: *backBuf) {
+            auto point = QPointF(runTime,variContainer[index++]->fValue);
+            buf.append(point);
+        }
     }
     if (runTime-lastUpdateTime>(1000/targetFps) || runTime<lastUpdateTime) {
         emit timingUpdate(runTime);
@@ -226,7 +247,23 @@ void ExChartView::updateData(qreal runTime) {
     }
 }
 
-void ExChartView::clearData() {
+void ExChartView::onPluginStart() {
+    if (log) {
+        if (logfile.isOpen()) logfile.close();
+        // logfile.setFileName(logFile);
+        logfile.setFileName(QUrl(logFile).path());
+        if(!logfile.open(QIODevice::WriteOnly|QIODevice::Append|QIODevice::Text)) {
+            setLog(false);
+            emit logFileErrorHappen();
+        } else {
+            QTextStream logstream(&logfile);
+            if (logFile.size()>0) logstream<<'\n';
+            for (auto &vari: variContainer) {
+                logstream << vari->getName()<<',';
+            }
+            logstream <<"timestamp"<< '\n';
+        }
+    }
     for (auto & line: lines) {line.clear();}
     for (auto & buf: bufA) {buf.clear();}
     for (auto & buf: bufB) {buf.clear();}
@@ -234,6 +271,12 @@ void ExChartView::clearData() {
     setViewXMax(viewXCenter+viewXRange/2);
     setViewYMin(viewYCenter-viewYRange/2);
     setViewYMax(viewYCenter+viewYRange/2);
+}
+
+void ExChartView::onPluginEnd() {
+    if (log) {
+        if (logfile.isOpen()) logfile.close();
+    }
 }
 
 QVector<QPointF> ExChartView::findPoints(qreal x) {
@@ -266,6 +309,14 @@ void ExChartView::onAttrPushed(const QString&name , const QString& type, std::si
         bufB.append(PointBuf{});
         bufB.back().reserve(400);
         pushUnit(vari);
+        if (log&&Backend::instance().getRunning()) {
+            QTextStream logstream(&logfile);
+            logstream << '\n';
+            for (auto &vari: variContainer) {
+                logstream << vari->getName()<<',';
+            }
+            logstream <<"timestamp"<< '\n';
+        }
     });
 
 }

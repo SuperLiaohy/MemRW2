@@ -23,7 +23,6 @@ Item {
             mouseInChart: chart.mouseInChart
             mouseXValue: chart.mouseXValue
             mouseYValue: chart.mouseYValue
-
             onResetClicked: chart.resetChart
         }
         RowLayout {
@@ -44,6 +43,12 @@ Item {
                 flow: chartBar.flow
                 tipsVisible: chartBar.showCrosshair
                 running: Backend.running
+                logFile: chartBar.logFile
+                log: chartBar.log
+                onLogFileErrorHappen: {
+                    chartBar.log = false
+                    showError("logfile happens error")
+                }
             }
         }
     }

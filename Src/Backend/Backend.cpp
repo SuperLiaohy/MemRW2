@@ -21,12 +21,13 @@ void Backend::init() {
             requestHandler();
 
             if (!running) {
+                if (started) pluginsEnd();
                 started = false;
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 continue;
             } else if (started == false) {
                 daplink->resetMap(pluginContainer);
-                clearPluginData();
+                pluginsStart();
                 clock.reset();
                 everyFrame = 0;
                 Hz = 0;
@@ -42,6 +43,7 @@ void Backend::init() {
                     continue;
                 }
             } else {errorCount/=2;}
+
             ++Hz;
             if (runTime-everyFrame>1000) {
                 everyFrame=runTime;
@@ -52,7 +54,7 @@ void Backend::init() {
             }
 
 
-            updatePlugin(runTime);
+            pluginsRunning(runTime);
             if (delayUs!=0) {
                 std::this_thread::sleep_for(std::chrono::microseconds(delayUs));
             }
@@ -109,15 +111,21 @@ void Backend::requestHandler() {
     });
 }
 
-void Backend::updatePlugin(qreal runTime) {
+void Backend::pluginsRunning(qreal runTime) {
     for (auto& plugin: pluginContainer) {
-        plugin->updateData(runTime);
+        plugin->onPluginRunning(runTime);
     }
 }
 
-void Backend::clearPluginData() {
+void Backend::pluginsStart() {
     for (auto& plugin: pluginContainer) {
-        plugin->clearData();
+        plugin->onPluginStart();
+    }
+}
+
+void Backend::pluginsEnd() {
+    for (auto& plugin: pluginContainer) {
+        plugin->onPluginEnd();
     }
 }
 

@@ -15,8 +15,9 @@ public:
     DisplayPluginInterface(VariComponent* vari=nullptr);
     virtual ~DisplayPluginInterface();
 
-    virtual void updateData(qreal runTime) = 0;
-    virtual void clearData() = 0;
+    virtual void onPluginRunning(qreal runTime) = 0;
+    virtual void onPluginStart(){};
+    virtual void onPluginEnd(){};
     QStringList reloadVari();
 
     void pushUnit(const QString&name , const QString& type, std::size_t address, std::size_t size);

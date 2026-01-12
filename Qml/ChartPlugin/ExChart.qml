@@ -7,6 +7,8 @@ FluFrame {
     id: frame
     clip:true
 
+    signal logFileErrorHappen()
+
     // expose
     property alias lineAttrModel: chartView.lineAttrModel
     property alias targetFps: chartView.targetFps
@@ -16,6 +18,8 @@ FluFrame {
     property alias viewYMin: chartView.viewYMin
     property alias viewYMax: chartView.viewYMax
     property alias flow: chartView.flow
+    property alias log: chartView.log
+    property alias logFile: chartView.logFile
     property alias tipsVisible: tipsLine.visible
     property alias mouseInChart: hoverHandler.hovered
     property alias mouseXValue: hoverHandler.mouseXValue
@@ -113,6 +117,9 @@ FluFrame {
         ExChartView {
             id: chartView
             anchors.fill: parent
+            onLogFileErrorHappen: {
+                frame.logFileErrorHappen()
+            }
         }
         Item {
             id: tipsLine

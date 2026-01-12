@@ -1,6 +1,7 @@
 import QtQuick
-import QtQuick.Layouts
 import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Dialogs
 import FluentUI
 
 FluFrame {
@@ -13,6 +14,8 @@ FluFrame {
     property bool showCrosshair: false
     property int targetFps: 30
     property alias flow: dragCheckedBox.checked
+    property alias log: logCheckedBox.checked
+    property alias logFile: logFileText.text
     required property var onResetClicked
 
     // expose to show
@@ -30,9 +33,7 @@ FluFrame {
 
     RowLayout {
         anchors.fill: parent
-        spacing: 12
-
-        FluText { text: qsTr("曲线:") }
+        spacing: 10
         FluButton {
             text: frame.showLineList ? qsTr("隐藏列表") : qsTr("显示列表")
             Layout.preferredWidth: 75
@@ -84,7 +85,6 @@ FluFrame {
         //     text: maxDrawPoints
         //     Layout.preferredWidth: 40
         // }
-        // 在控制栏中添加
         Rectangle { width: 1; Layout.fillHeight: true; color: FluTheme.dark ?  "#444" : "#ddd" }
         FluButton {
             text: frame.showCrosshair ? qsTr("✕ 准线") : qsTr("○ 准线")
@@ -93,6 +93,30 @@ FluFrame {
                 frame.showCrosshair = !frame.showCrosshair
             }
         }
+
+        Rectangle { width: 1; Layout.fillHeight: true; color: FluTheme.dark ? "#444" : "#ddd" }
+        FluCheckBox{
+            enabled: !frame.running
+            id: logCheckedBox
+            checked: false
+            text: "Log File: "
+            textRight: false
+        }
+        FluIconButton {
+            enabled: !frame.running
+            id: logFileSelector
+            iconSource: FluentIcons.FileExplorer
+            iconSize: 14
+            onClicked: {
+                fileDialog.open()
+            }
+
+            FluText {
+                anchors.bottom: logFileSelector.top; anchors.bottomMargin: -5; anchors.horizontalCenter:logFileSelector.horizontalCenter;
+                visible: logFileSelector.hovered;  id: logFileText;font.pixelSize: 14;
+            }
+        }
+
 
         Item { Layout.fillWidth: true }
         FluText {
@@ -123,4 +147,15 @@ FluFrame {
             font.bold: true
         }
     }
+
+    FileDialog {
+        id: fileDialog
+        nameFilters: ["csv files [*.csv] (*.csv)","txt files [*.txt] (*.txt)", "all files [*.*] (*.*)"]
+
+        onAccepted: {
+            console.log("selected:", selectedFile)
+            logFileText.text = selectedFile;
+        }
+    }
+
 }
