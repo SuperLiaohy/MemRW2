@@ -226,17 +226,20 @@ FluFrame {
                 enabled: !(chartView.flow&&frame.running)
                 onWheel: (event) => {
                     const factor = event.pixelDelta.y > 0 ? 0.8 : 1.25
-
-                    const yRange = chartView.viewYMax - chartView.viewYMin
-                    const yCenter = chartView.viewYMax - point.position.y / parent.height * yRange
-                    chartView.viewYMax = yCenter + point.position.y / parent.height * (yRange * factor)
-                    chartView.viewYMin = yCenter - (parent.height - point.position.y) / parent.height * (yRange * factor)
-
-                    const xRange = chartView.viewXMax - chartView.viewXMin
-                    const xCenter = chartView.viewXMin + point.position.x / parent.width * xRange
-                    chartView.viewXMax = xCenter + (parent.width - point.position.x) / parent.width * (xRange * factor)
-                    chartView.viewXMin = xCenter - point.position.x / parent.width * (xRange * factor)
-
+                    const hasCtrl  = (event.modifiers & Qt.ControlModifier) !== 0
+                    const hasShift = (event.modifiers & Qt.ShiftModifier)   !== 0
+                    if(!hasCtrl) {
+                        const yRange = chartView.viewYMax - chartView.viewYMin
+                        const yCenter = chartView.viewYMax - point.position.y / parent.height * yRange
+                        chartView.viewYMax = yCenter + point.position.y / parent.height * (yRange * factor)
+                        chartView.viewYMin = yCenter - (parent.height - point.position.y) / parent.height * (yRange * factor)
+                    }
+                    if (!hasShift) {
+                        const xRange = chartView.viewXMax - chartView.viewXMin
+                        const xCenter = chartView.viewXMin + point.position.x / parent.width * xRange
+                        chartView.viewXMax = xCenter + (parent.width - point.position.x) / parent.width * (xRange * factor)
+                        chartView.viewXMin = xCenter - point.position.x / parent.width * (xRange * factor)
+                    }
                     chartView.update()
                     event.accept = true
                 }

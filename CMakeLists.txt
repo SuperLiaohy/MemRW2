@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(MemRW)
+project(MemRW2)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -11,10 +11,10 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBUSB REQUIRED IMPORTED_TARGET libusb-1.0)
 
 add_subdirectory(DwarfCpp)
-add_executable(MemRW main.cpp)
+add_executable(MemRW2 main.cpp)
 
-target_include_directories(MemRW PUBLIC Src/UIComponent Src/USBInterface Src/ExChartView Src/Backend Src/Variable Src/ExTable)
-qt_add_qml_module(MemRW
+target_include_directories(MemRW2 PUBLIC Src/UIComponent Src/USBInterface Src/ExChartView Src/Backend Src/Variable Src/ExTable)
+qt_add_qml_module(MemRW2
         URI MemRWApp
         QML_FILES
         Qml/Main.qml
@@ -42,24 +42,19 @@ qt_add_qml_module(MemRW
         Src/USBInterface/DAPReader.cpp Src/USBInterface/DAPReader.h
         Src/USBInterface/USBBulk.cpp Src/USBInterface/USBBulk.h
         Src/USBInterface/USBDevDesc.cpp Src/USBInterface/USBDevDesc.h Src/USBInterface/SWReg.h
-#        Src/Backend/DisplayPlugin.cpp Src/Backend/DisplayPluginInterface.hpp
 )
 
-target_link_libraries(MemRW PRIVATE
+target_link_libraries(MemRW2 PRIVATE
         Qt6::Quick
         DwarfCpp
 )
 
-target_link_libraries(MemRW PRIVATE
+target_link_libraries(MemRW2 PRIVATE
         PkgConfig::LIBUSB
 )
 
-
-message(STATUS libusb-- "${LIBUSB_INCLUDE_DIRS} ${LIBUSB_LIBRARY_DIRS} ${LIBUSB_LIBRARIES} ${LIBUSB_CFLAGS_OTHER}")
-
-
 include(GNUInstallDirs)
-install(TARGETS MemRW
+install(TARGETS MemRW2
         BUNDLE DESTINATION .
         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
         RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
