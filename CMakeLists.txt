@@ -13,7 +13,7 @@ pkg_check_modules(LIBUSB REQUIRED IMPORTED_TARGET libusb-1.0)
 add_subdirectory(DwarfCpp)
 add_executable(MemRW main.cpp)
 
-target_include_directories(MemRW PUBLIC Src/UIComponent Src/USBInterface Src/ExChartView Src/Backend Src/Variable)
+target_include_directories(MemRW PUBLIC Src/UIComponent Src/USBInterface Src/ExChartView Src/Backend Src/Variable Src/ExTable)
 qt_add_qml_module(MemRW
         URI MemRWApp
         QML_FILES
@@ -27,6 +27,7 @@ qt_add_qml_module(MemRW
         Qml/ChartPlugin/LineListView.qml
         Qml/ChartPlugin/ChartBar.qml
         Qml/ChartPlugin/ChartPlugin.qml
+        Qml/TablePlugin/ExTableView.qml
 
         SOURCES
         Src/Variable/TreeModel.cpp Src/Variable/TreeModel.hpp
@@ -34,6 +35,7 @@ qt_add_qml_module(MemRW
         Src/UIComponent/CircularReveal.cpp Src/UIComponent/CircularReveal.h Src/UIComponent/stdafx.h
         Src/ExChartView/ExChartView.cpp Src/ExChartView/ExChartView.hpp
         Src/ExChartView/LineAttrModel.cpp Src/ExChartView/LineAttrModel.hpp
+        Src/ExTable/ExTableModel.cpp Src/ExTable/ExTableModel.h
         Src/Backend/Backend.cpp Src/Backend/Backend.hpp
         Src/Backend/VariComponent.cpp Src/Backend/VariComponent.hpp
         Src/Backend/DisplayPluginInterface.cpp Src/Backend/DisplayPluginInterface.hpp

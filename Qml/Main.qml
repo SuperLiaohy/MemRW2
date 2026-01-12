@@ -51,8 +51,7 @@ FluWindow {
 
             panel2Title: "table"
             panel2Content:  Component {
-                Item {
-                    clip: true
+                ExTableView {
                     anchors.fill: parent
                 }
             }

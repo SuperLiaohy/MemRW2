@@ -2,9 +2,10 @@
 #include <QQmlApplicationEngine>
 #include <QFileSystemModel>
 #include <qqmlcontext.h>
-
+#include <qqml.h>
 #include "Src/Variable/TreeModel.hpp"
 #include "Backend.hpp"
+#include "Src/ExTable/ExTableModel.h"
 
 int main(int argc, char *argv[])
 {

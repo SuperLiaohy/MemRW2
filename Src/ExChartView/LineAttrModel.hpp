@@ -6,7 +6,6 @@
 
 #include <QAbstractListModel>
 #include <QColor>
-#include <qqmlintegration.h>
 
 class ExChartView;
 
