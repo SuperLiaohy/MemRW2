@@ -194,7 +194,12 @@ void ExChartView::updatePolish() {
         lineAttrModel->setData(lineAttrModel->index(i),lines[i].getLen(),LineAttrModel::RoleNames::BufLenRole);
         ready[i].clear();
     }
-
+    if (flow) {
+        if (runTime>getViewXRange()) {
+            setViewXMax(runTime);
+            setViewXMin(runTime-getViewXRange());
+        }
+    }
 }
 
 void ExChartView::switchBuf() {
@@ -204,13 +209,8 @@ void ExChartView::switchBuf() {
     frontBuf.store(ready);
 }
 
-void ExChartView::updatePath(qreal runTime) {
-    if (flow) {
-        if (runTime>getViewXRange()) {
-            setViewXMax(runTime);
-            setViewXMin(runTime-getViewXRange());
-        }
-    }
+void ExChartView::updatePath(qreal t) {
+    runTime = runTime;
     polish();
     update();
 }

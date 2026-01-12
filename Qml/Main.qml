@@ -17,10 +17,10 @@ FluWindow {
         id: bar
         height: 30
         showDark: true
-        // enabled:
         darkClickListener:(button)=> {
-            enabled = false;
-            handleDarkChanged(button)
+            // enabled = false;
+            // handleDarkChanged(button)
+            changeDark()
         }
         z:7
     }
@@ -30,73 +30,88 @@ FluWindow {
         anchors.topMargin: bar.height
         anchors.fill: parent
 
-        // ==================== 控制栏 ====================
+        // ==================== toolbar ====================
         ToolBar {
             Layout.fillWidth: true
             Layout.preferredHeight: 60
             padding: 10
         }
-
-        ChartPlugin {
-            id: chartPlugin
+        DockSystem {
+            id: dockSystem
             Layout.fillWidth: true
             Layout.fillHeight: true
-        }
+            panel1Title: "chart"
+            panel1Content:  Component {
+                ChartPlugin {
+                    enabled: !sheet.visible
+                    id: chartPlugin
+                    anchors.fill: parent
+                }
+            }
 
+            panel2Title: "table"
+            panel2Content:  Component {
+                Item {
+                    clip: true
+                    anchors.fill: parent
+                }
+            }
+        }
     }
 
 
+    // ==================== vari sheet ====================
     onHeightChanged: {
         if (sheet.height>sheet.maxSize) sheet.height = sheet.maxSize
     }
     VariWindow {
         id:sheet
+        parent: dockSystem.panel1Instance
         size: parent.height*0.614
         maxSize: parent.height
-        // reloadAction: Backend.reloadVari
     }
 
     // ==================== 动画 ====================
-    Component{
-        id: com_reveal
-        CircularReveal{
-            id: reveal
-            target: window.containerItem()
-            anchors.fill: parent
-            darkToLight: FluTheme.dark
-            onAnimationFinished:{
-                //动画结束后释放资源
-                loader_reveal.sourceComponent = undefined
-                bar.enabled = true
-            }
-            onImageChanged: {
-                changeDark()
-            }
-        }
-    }
-
-    FluLoader{
-        id:loader_reveal
-        anchors.fill: parent
-    }
-
-    function distance(x1,y1,x2,y2){
-        return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2))
-    }
-    function handleDarkChanged(button){
-        if(FluTools.isMacos() || !FluTheme.animationEnabled){
-            changeDark()
-        }else{
-            loader_reveal.sourceComponent = com_reveal
-            var target = window.containerItem()
-            var pos = button.mapToItem(target,0,0)
-            var mouseX = pos.x + button.width / 2
-            var mouseY = pos.y + button.height / 2
-            var radius = Math.max(distance(mouseX,mouseY,0,0),distance(mouseX,mouseY,target.width,0),distance(mouseX,mouseY,0,target.height),distance(mouseX,mouseY,target.width,target.height))
-            var reveal = loader_reveal.item
-            reveal.start(reveal.width*Screen.devicePixelRatio,reveal.height*Screen.devicePixelRatio,Qt.point(mouseX,mouseY),radius)
-        }
-    }
+    // Component{
+    //     id: com_reveal
+    //     CircularReveal{
+    //         id: reveal
+    //         target: window.containerItem()
+    //         anchors.fill: parent
+    //         darkToLight: FluTheme.dark
+    //         onAnimationFinished:{
+    //             //动画结束后释放资源
+    //             loader_reveal.sourceComponent = undefined
+    //             bar.enabled = true
+    //         }
+    //         onImageChanged: {
+    //             changeDark()
+    //         }
+    //     }
+    // }
+    //
+    // FluLoader{
+    //     id:loader_reveal
+    //     anchors.fill: parent
+    // }
+    //
+    // function distance(x1,y1,x2,y2){
+    //     return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2))
+    // }
+    // function handleDarkChanged(button){
+    //     if(FluTools.isMacos() || !FluTheme.animationEnabled){
+    //         changeDark()
+    //     }else{
+    //         loader_reveal.sourceComponent = com_reveal
+    //         var target = window.containerItem()
+    //         var pos = button.mapToItem(target,0,0)
+    //         var mouseX = pos.x + button.width / 2
+    //         var mouseY = pos.y + button.height / 2
+    //         var radius = Math.max(distance(mouseX,mouseY,0,0),distance(mouseX,mouseY,target.width,0),distance(mouseX,mouseY,0,target.height),distance(mouseX,mouseY,target.width,target.height))
+    //         var reveal = loader_reveal.item
+    //         reveal.start(reveal.width*Screen.devicePixelRatio,reveal.height*Screen.devicePixelRatio,Qt.point(mouseX,mouseY),radius)
+    //     }
+    // }
 
     function changeDark(){
         if(FluTheme.dark){

@@ -58,7 +58,7 @@ public:
     void updatePolish() override;
 
     void switchBuf();
-    void updatePath(qreal runTime);
+    void updatePath(qreal t);
     void updateData(qreal runTime) override;
     void clearData() override;
     LineAttrModel *getLineAttrModel() {return lineAttrModel;}
@@ -122,6 +122,7 @@ private:
     quint32 frameCount=0;
     quint32 realFps=0;
     bool flow = true;
+    qreal runTime;
 
     QVector<ExLine> lines;
     LineAttrModel* lineAttrModel;

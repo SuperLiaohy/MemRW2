@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import FluentUI
 
-FluFrame {
+Item {
     id: chartPlugin
 
     // ==================== 主内容区 ====================

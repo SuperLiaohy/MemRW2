@@ -20,6 +20,7 @@ qt_add_qml_module(MemRW
         Qml/Main.qml
         Qml/VariWindow.qml
         Qml/ToolBar.qml
+        Qml/DockSystem.qml
 
         Qml/ChartPlugin/LineDialog.qml
         Qml/ChartPlugin/ExChart.qml

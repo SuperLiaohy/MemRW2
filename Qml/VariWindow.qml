@@ -349,5 +349,12 @@ FluSheet {
         sheet.appendAction = f;
         open(FluSheetType.Bottom)
     }
+
+    Component.onCompleted: {
+        console.log("variWin open")
+    }
+    Component.onDestruction: {
+        console.log("variWin close")
+    }
 }
 
