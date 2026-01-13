@@ -251,7 +251,7 @@ void ExChartView::onPluginStart() {
     if (log) {
         if (logfile.isOpen()) logfile.close();
         // logfile.setFileName(logFile);
-        logfile.setFileName(QUrl(logFile).path());
+        logfile.setFileName(QUrl(logFile).toLocalFile());
         if(!logfile.open(QIODevice::WriteOnly|QIODevice::Append|QIODevice::Text)) {
             setLog(false);
             emit logFileErrorHappen();

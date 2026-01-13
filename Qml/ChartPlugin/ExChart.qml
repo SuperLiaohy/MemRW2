@@ -76,7 +76,7 @@ FluFrame {
         WheelHandler {
             id: wheelYHandler
             onWheel: (event) => {
-                const factor = event.pixelDelta.y > 0 ? 0.8 : 1.25
+                const factor = event.angleDelta.y > 0 ? 0.8 : 1.25
                 const yRange = chartView.viewYMax - chartView.viewYMin
                 const yCenter = chartView.viewYMax - point.position.y / parent.height * yRange
                 chartView.viewYMax = yCenter + point.position.y / parent.height * (yRange * factor)
@@ -225,7 +225,8 @@ FluFrame {
                 id: wheelHandler
                 enabled: !(chartView.flow&&frame.running)
                 onWheel: (event) => {
-                    const factor = event.pixelDelta.y > 0 ? 0.8 : 1.25
+                    const factor = event.angleDelta.y > 0 ? 0.8 : 1.25
+                             console.log(event.angleDelta.y)
                     const hasCtrl  = (event.modifiers & Qt.ControlModifier) !== 0
                     const hasShift = (event.modifiers & Qt.ShiftModifier)   !== 0
                     if(!hasCtrl) {
@@ -291,7 +292,7 @@ FluFrame {
             id: wheelXHandler
             enabled: !(chartView.flow&&frame.running)
             onWheel: (event) => {
-                const factor = event.pixelDelta.y > 0 ? 0.8 : 1.25
+                const factor = event.angleDelta.y > 0 ? 0.8 : 1.25
                 const xRange = chartView.viewXMax - chartView.viewXMin
                 const xCenter = chartView.viewXMin + point.position.x / parent.width * xRange
                 chartView.viewXMax = xCenter + (parent.width - point.position.x) / parent.width * (xRange * factor)
@@ -438,6 +439,7 @@ FluFrame {
         chartView.viewXMin = chartView.viewXCenter - chartView.viewXRange / 2
         chartView.viewYMax = chartView.viewYCenter + chartView.viewYRange / 2
         chartView.viewYMin = chartView.viewYCenter - chartView.viewYRange / 2
+        chartView.update()
     }
     function pointToChart(xm,ym) {
         return {x:chartView.viewXMin+xm/chartView.width*(chartView.viewXMax-chartView.viewXMin),

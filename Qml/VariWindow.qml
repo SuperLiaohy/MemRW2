@@ -91,7 +91,7 @@ FluSheet {
         FluText {
             text: "Quick variable addition: "
         }
-        TextField {
+        FluTextBox {
             id: vari
             Layout.fillWidth: true
             placeholderText: "Input variable"
@@ -247,7 +247,7 @@ FluSheet {
                         return palette.highlight
                     color: FluTheme.dark ? "#1e1e1e" : "#e0e0e0"
                 }
-                opacity: control.current ? 0.6 : 0.3
+                opacity: control.current ? 0.3 : 0.2
                 borderColor: "#145eef"
                 borderWidth: control.current ? 1 : 0
                 radius: rad(column)

@@ -11,7 +11,7 @@ FluFrame {
 
     // expose to control
     property bool showLineList: true
-    property bool showCrosshair: false
+    property alias showCrosshair: tipsLineBox.checked
     property int targetFps: 30
     property alias flow: dragCheckedBox.checked
     property alias log: logCheckedBox.checked
@@ -86,12 +86,11 @@ FluFrame {
         //     Layout.preferredWidth: 40
         // }
         Rectangle { width: 1; Layout.fillHeight: true; color: FluTheme.dark ?  "#444" : "#ddd" }
-        FluButton {
-            text: frame.showCrosshair ? qsTr("✕ 准线") : qsTr("○ 准线")
-            Layout.preferredWidth: 60
-            onClicked: {
-                frame.showCrosshair = !frame.showCrosshair
-            }
+        FluCheckBox {
+            id: tipsLineBox
+            checked: false
+            text: "tips Line: "
+            textRight: false
         }
 
         Rectangle { width: 1; Layout.fillHeight: true; color: FluTheme.dark ? "#444" : "#ddd" }

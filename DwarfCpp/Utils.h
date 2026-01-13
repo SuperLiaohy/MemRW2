@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "Dwarf.h"
+#include "Dwarf.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,7 +15,7 @@ extern "C" {
 #endif
 
 namespace dwarf {
-
+using std::nullptr_t;
 class Dwarf;
 using Tag = Dwarf_Half;
 using Form = Dwarf_Half;

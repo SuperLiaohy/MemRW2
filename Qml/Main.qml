@@ -22,6 +22,7 @@ FluWindow {
             // handleDarkChanged(button)
             changeDark()
         }
+        icon: "qrc:/qt/qml/MemRWApp/app-icon.jpg"
         z:7
     }
 

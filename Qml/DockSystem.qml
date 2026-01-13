@@ -561,7 +561,7 @@ Item {
 
         Rectangle {
             anchors.fill: parent
-            color: FluTheme.dark ? "#3a3a3a" : "#e0e0e0"
+            color: FluTheme.dark ? "#2a2a2a" : "#f0f0f0"
             radius: 4
             border. color: FluTheme.dark ? "#444" : "#ddd"
             border.width: 1

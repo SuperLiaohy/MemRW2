@@ -67,7 +67,7 @@ FluFrame {
             id: variHeader
             syncView: tableVariView
             Layout.fillWidth: true
-            Layout.preferredHeight: 50
+            Layout.preferredHeight: 60
 
             clip: true
             boundsMovement:  Flickable.StopAtBounds
@@ -185,7 +185,7 @@ FluFrame {
                             return palette.highlight
                         return FluTheme.dark ? "#1e1e1e" :  "#e0e0e0"
                     }
-                    opacity:  variControl.current ?  0.6 : 0.3
+                    opacity:  variControl.current ?  0.3 : 0.2
                     borderColor:  "#145eef"
                     borderWidth:  variControl.current ?  1 : 0
                     radius:  rad(variControl. column)
@@ -242,7 +242,7 @@ FluFrame {
                     id: editableValueComponent
                     RowLayout {
                         anchors.fill: parent
-                        TextField {
+                        FluTextBox {
                             Layout.fillWidth: true
                             id: editField
                             anchors.margins: 2
@@ -332,7 +332,7 @@ FluFrame {
                     }
                     RowLayout {
                         FluText {text: "name: "}
-                        TextField {
+                        FluTextBox {
                             Layout.fillWidth: true
                             placeholderText: "Input name"
                             text: tableVariDialog.node.name

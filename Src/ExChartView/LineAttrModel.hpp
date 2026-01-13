@@ -10,17 +10,17 @@
 class ExChartView;
 
 enum BasicType {
-    UINT8,
-    UINT16,
-    UINT32,
-    INT8,
-    INT16,
-    INT32,
-    FLOAT,
+    UINT8_T,
+    UINT16_T,
+    UINT32_T,
+    INT8_T,
+    INT16_T,
+    INT32_T,
+    FLOAT_T,
 
-    UINT64,
-    INT64,
-    DOUBLE,
+    UINT64_T,
+    INT64_T,
+    DOUBLE_T,
 };
 
 

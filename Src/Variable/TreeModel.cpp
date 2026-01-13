@@ -93,8 +93,8 @@ int TreeModel::columnCount(const QModelIndex &parent) const {
 
 void TreeModel::setTreeData(const QUrl& path) {
     beginResetModel();
-    qDebug()<<path.path().toStdString();
-    tree = getVariTree(path.path().toStdString());
+    qDebug()<<path.toLocalFile().toStdString();
+    tree = getVariTree(path.toLocalFile().toStdString());
     endResetModel();
 }
 

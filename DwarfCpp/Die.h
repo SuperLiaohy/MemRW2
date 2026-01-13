@@ -14,7 +14,7 @@
 extern "C" {
 #endif
 #include <libdwarf.h>
-#include <dwarf.h>
+#include <Dwarf.hpp>
 #ifdef __cplusplus
 }
 #endif

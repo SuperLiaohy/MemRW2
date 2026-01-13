@@ -3,13 +3,12 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import FluentUI
 
-Item {
+FluFrame {
     id: chartPlugin
 
     // ==================== 主内容区 ====================
     ColumnLayout {
         anchors.fill: parent
-        spacing: 8
         ChartBar {
             id: chartBar
             Layout.fillWidth: true

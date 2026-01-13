@@ -80,7 +80,7 @@ bool Backend::connect() {
 
 void Backend::disconnect() {
     if (running==true) {
-        sync.sendRequest([this](){setRunning(false);});
+        sync.sendRequest([this](){setRunning(false);},Sync::Event::CLOSE_EVENT);
     }
     daplink->disconnect();
     connected = false;
@@ -94,18 +94,18 @@ QStringList Backend::reloadVari() {
     }
     return variList;
 }
-
 void Backend::requestHandler() {
     sync.tryGetRequest([this](Sync::Event e) {
-        qDebug() << "handle request";
         switch (e) {
             case Sync::Event::UPDATE_VARI_EVENT:
                 daplink->resetMap(pluginContainer);
+                qDebug() << "vari";
                 break;
             case Sync::Event::WRITE_EVENT:
-
+                qDebug() << "write";
                 break;
             case Sync::Event::CLOSE_EVENT:
+                // qDebug() << "close"<<QDateTime::currentDateTimeUtc();
                 break;
         }
     });

@@ -4,7 +4,7 @@
 
 #include "Utils.h"
 
-#include "Dwarf.h"
+#include "Dwarf.hpp"
 
 namespace dwarf {
 volatile Dwarf* Error::dwarfFile = nullptr;

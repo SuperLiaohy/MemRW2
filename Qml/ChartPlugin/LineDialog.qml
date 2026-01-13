@@ -17,7 +17,7 @@ FluContentDialog {
         Change,
         Add
     }
-    width:335
+    width:350
 
     property int mode: LineDialog.OpenMode.Change
     property var lineAttrModel: null
@@ -74,7 +74,7 @@ FluContentDialog {
     }
     contentDelegate: Component {
         Item {
-            implicitHeight: 450
+            implicitHeight: 500
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: 20

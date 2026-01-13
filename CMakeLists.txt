@@ -3,7 +3,7 @@ project(MemRW2)
 
 set(CMAKE_CXX_STANDARD 20)
 
-set(CMAKE_PREFIX_PATH "/home/liaohy/User/Env/Qt/SDK/6.10.1/gcc_64")
+#set(CMAKE_PREFIX_PATH "/home/liaohy/User/Env/Qt/SDK/6.10.1/gcc_64")
 find_package(Qt6 REQUIRED Quick)
 qt_standard_project_setup(REQUIRES 6.8)
 
@@ -42,6 +42,8 @@ qt_add_qml_module(MemRW2
         Src/USBInterface/DAPReader.cpp Src/USBInterface/DAPReader.h
         Src/USBInterface/USBBulk.cpp Src/USBInterface/USBBulk.h
         Src/USBInterface/USBDevDesc.cpp Src/USBInterface/USBDevDesc.h Src/USBInterface/SWReg.h
+        RESOURCES
+                app-icon.jpg
 )
 
 target_link_libraries(MemRW2 PRIVATE

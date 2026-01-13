@@ -22,7 +22,7 @@ public:
     };
     Sync() = default;
     template<typename Callback>
-    void sendRequest(Callback fun, Event e = Event::UPDATE_VARI_EVENT) {sem_request.release();sem_response.acquire(); fun(); sem_resume.release();}
+    void sendRequest(Callback fun, Event e = Event::UPDATE_VARI_EVENT) {sem_request.release();sem_response.acquire();event = e; fun(); sem_resume.release();}
     template<typename Callback>
     void tryGetRequest(Callback fun) {if (sem_request.try_acquire()) {sem_response.release();sem_resume.acquire();fun(event);}}
 private:
@@ -50,6 +50,7 @@ class Backend : public QObject {
     Q_PROPERTY(quint32 samplingHz READ getSamplingHz NOTIFY samplingHzChanged)
     Q_PROPERTY(quint32 delayUs READ getDelayUs WRITE setDelayUs NOTIFY delayUsChanged)
     Backend() : daplink(std::make_unique<DAPReader>()), variModel(std::make_unique<TreeModel>(std::make_shared<VariTree>())) {};
+
 public:
     static Backend& instance() {static Backend backend;return backend;}
     static Backend* create(QQmlEngine* qmlEngine, QJSEngine* jsEngine) {

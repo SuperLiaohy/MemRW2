@@ -11,6 +11,7 @@ int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
 
+    app.setWindowIcon(QIcon(":/qt/qml/MemRWApp/app-icon.jpg"));
     QQmlApplicationEngine engine;
 
     Backend::instance().init();
