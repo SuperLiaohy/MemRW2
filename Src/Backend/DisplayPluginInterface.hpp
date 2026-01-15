@@ -13,7 +13,7 @@ class VariComponent;
 class DisplayPluginInterface {
 public:
     DisplayPluginInterface(VariComponent* vari=nullptr);
-    virtual ~DisplayPluginInterface();
+    void detachSelf();
 
     virtual void onPluginRunning(qreal runTime) = 0;
     virtual void onPluginStart(){};

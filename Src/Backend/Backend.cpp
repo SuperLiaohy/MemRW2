@@ -10,7 +10,7 @@
 #include "Src/USBInterface/DAPReader.h"
 
 void Backend::init() {
-    samplingWorker = std::jthread([this](const std::stop_token& stoken) {
+    samplingWorker = std::jthread([this](std::stop_token stoken) {
         bool started = false;
         int res;
         std::size_t errorCount = 0;
@@ -37,8 +37,9 @@ void Backend::init() {
             auto runTime = clock.runTime()/1000.0;
             if(daplink->updateVari(pluginContainer)!=DAP::TRANSFER_OK) {
                 if(++errorCount>200) {
-                    setRunning(false);
-                    emit linkErrorHappen();
+                    running.store(false);
+                    QMetaObject::invokeMethod(this, "runningChanged", Qt::QueuedConnection);
+                    QMetaObject::invokeMethod(this, "linkErrorHappen", Qt::QueuedConnection);
                     errorCount = 0;
                     continue;
                 }
@@ -48,17 +49,17 @@ void Backend::init() {
             if (runTime-everyFrame>1000) {
                 everyFrame=runTime;
                 samplingHz = Hz;
-                emit samplingHzChanged();
+                QMetaObject::invokeMethod(this, "samplingHzChanged", Qt::QueuedConnection);
                 std::cout << "Hz: " <<Hz<<std::endl;
                 Hz=0;
             }
-
 
             pluginsRunning(runTime);
             if (delayUs!=0) {
                 std::this_thread::sleep_for(std::chrono::microseconds(delayUs));
             }
         }
+        std::cout <<"close" <<std::endl;
     });
 }
 
@@ -105,7 +106,7 @@ void Backend::requestHandler() {
                 qDebug() << "write";
                 break;
             case Sync::Event::CLOSE_EVENT:
-                // qDebug() << "close"<<QDateTime::currentDateTimeUtc();
+                qDebug() << "close"<<QDateTime::currentDateTimeUtc();
                 break;
         }
     });

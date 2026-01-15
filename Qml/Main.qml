@@ -53,6 +53,7 @@ FluWindow {
             panel2Title: "table"
             panel2Content:  Component {
                 ExTableView {
+                    enabled: !sheet.visible
                     anchors.fill: parent
                 }
             }
@@ -66,7 +67,6 @@ FluWindow {
     }
     VariWindow {
         id:sheet
-        parent: dockSystem.panel1Instance
         size: parent.height*0.614
         maxSize: parent.height
     }

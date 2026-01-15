@@ -3,7 +3,6 @@ project(MemRW2)
 
 set(CMAKE_CXX_STANDARD 20)
 
-#set(CMAKE_PREFIX_PATH "/home/liaohy/User/Env/Qt/SDK/6.10.1/gcc_64")
 find_package(Qt6 REQUIRED Quick)
 qt_standard_project_setup(REQUIRES 6.8)
 
@@ -11,7 +10,12 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBUSB REQUIRED IMPORTED_TARGET libusb-1.0)
 
 add_subdirectory(DwarfCpp)
-add_executable(MemRW2 main.cpp)
+
+if(WIN32)
+        add_executable(MemRW2  WIN32 main.cpp)
+else()
+        add_executable(MemRW2 main.cpp)
+endif()
 
 target_include_directories(MemRW2 PUBLIC Src/UIComponent Src/USBInterface Src/ExChartView Src/Backend Src/Variable Src/ExTable)
 qt_add_qml_module(MemRW2

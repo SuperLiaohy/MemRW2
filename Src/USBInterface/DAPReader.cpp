@@ -15,7 +15,10 @@
 SerialDebugInterface DAPReader::sw;
 
 namespace {
-    uint32_t DAP_INTERFACE_CLASS = 255;
+    uint32_t DAP_INTERFACE_CLASS = 0xFF;
+    uint32_t DAP_INTERFACE_SUBCLASS = 0x00;
+    uint32_t DAP_INTERFACE_PROTOCOL = 0x00;
+
 
     uint8_t DAP_SWJ_Clock = 0x11;
     uint8_t DAP_SWJ_Sequence = 0x12;
@@ -31,6 +34,7 @@ DAPReader::DAPReader() : response_buffer(255 * 5 + 3), mapRequestBuf(255*5+3),re
 }
 
 DAPReader::~DAPReader() {
+    qDebug()<<"fuck dap";
     disconnect();
 }
 
@@ -100,11 +104,16 @@ bool DAPReader::auto_connect() {
                                                            reinterpret_cast<unsigned char *>(name_data),
                                                            sizeof(name_data)))
                         usb_desc->interface_name = name_data;
-                    if (desc->bInterfaceClass == DAP_INTERFACE_CLASS || is_usb_bulk(usb_desc->interface_name)) {
+                    if (desc->bInterfaceClass == DAP_INTERFACE_CLASS &&
+                        desc->bInterfaceSubClass == DAP_INTERFACE_SUBCLASS &&
+                        desc->bInterfaceProtocol == DAP_INTERFACE_PROTOCOL) {
                         usb_desc->interface_num = desc->bInterfaceNumber;
+                        bool bulkinHostPC = true;
                         for (int j = 0; j < desc->bNumEndpoints; ++j) {
-                            if ((desc->endpoint[j].bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_IN)
+                            if ((desc->endpoint[j].bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_IN && bulkinHostPC){
                                 usb_desc->bulk_in_endpoints = desc->endpoint[j].bEndpointAddress;
+                                bulkinHostPC = false;
+                            }
                             else usb_desc->bulk_out_endpoints = desc->endpoint[j].bEndpointAddress;
                         }
                         found = true;

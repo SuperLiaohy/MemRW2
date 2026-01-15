@@ -13,8 +13,8 @@ ExTableModel::ExTableModel(QObject *parent) {
 }
 
 ExTableModel::~ExTableModel() {
-    Backend::instance().sync.sendRequest([]() {
-        Backend::instance().setRunning(false);
+    Backend::instance().sync.sendRequest([this]() {
+        detachSelf();
     },Sync::Event::CLOSE_EVENT);
 }
 
@@ -94,7 +94,9 @@ void ExTableModel::onPluginRunning(qreal runTime) {
         for (int i = 0; i < rowData.size(); ++i) {
             rowData[i].readValue = variContainer[i]->fValue;
         }
-        emit dataChanged(index(0,1), index(rowData.size()-1,1), {Qt::DisplayRole, Qt::EditRole});
+        QMetaObject::invokeMethod(this,[this]() {
+            emit dataChanged(index(0,1), index(rowData.size()-1,1), {Qt::DisplayRole, Qt::EditRole});
+        },Qt::QueuedConnection);
     }
 }
 

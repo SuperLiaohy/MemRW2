@@ -68,7 +68,6 @@ public:
     quint32 getSamplingHz() const {return  samplingHz;}
     quint32 getDelayUs() const {return  delayUs;}
     void setDelayUs(quint32 value) {delayUs = value; emit delayUsChanged();}
-
     Q_INVOKABLE bool connect();
     Q_INVOKABLE void disconnect();
     Q_INVOKABLE QStringList reloadVari();
@@ -100,9 +99,9 @@ private:
     bool connected{false};
     quint32 samplingHz{0};
     quint32 delayUs{0};
-    std::jthread samplingWorker;
     std::vector<DisplayPluginInterface*> pluginContainer;
-    std::unique_ptr<DAPReader> daplink;
     std::unique_ptr<TreeModel> variModel;
+    std::unique_ptr<DAPReader> daplink;
+    std::jthread samplingWorker;
 
 };

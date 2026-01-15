@@ -102,8 +102,9 @@ ExChartView::ExChartView(QQuickItem *parent) : QQuickItem(parent), lineAttrModel
 
 ExChartView::~ExChartView() {
     Backend::instance().sync.sendRequest([this]() {
+        log=false;
         if (logfile.isOpen()) logfile.close();
-        Backend::instance().setRunning(false);
+        detachSelf();
     },Sync::Event::CLOSE_EVENT);
 }
 
@@ -242,19 +243,29 @@ void ExChartView::onPluginRunning(qreal runTime) {
         }
     }
     if (runTime-lastUpdateTime>(1000/targetFps) || runTime<lastUpdateTime) {
-        emit timingUpdate(runTime);
+        QMetaObject::invokeMethod(this, &ExChartView::timingUpdate, Qt::QueuedConnection, runTime);
+        // emit timingUpdate(runTime);
         lastUpdateTime = runTime;
     }
 }
 
 void ExChartView::onPluginStart() {
+    for (auto & line: lines) {line.clear();}
+    for (auto & buf: bufA) {buf.clear();}
+    for (auto & buf: bufB) {buf.clear();}
     if (log) {
         if (logfile.isOpen()) logfile.close();
-        // logfile.setFileName(logFile);
         logfile.setFileName(QUrl(logFile).toLocalFile());
         if(!logfile.open(QIODevice::WriteOnly|QIODevice::Append|QIODevice::Text)) {
-            setLog(false);
-            emit logFileErrorHappen();
+            log = false;
+            QMetaObject::invokeMethod(this, [this]() {
+                setViewXMin(viewXCenter-viewXRange/2);
+                setViewXMax(viewXCenter+viewXRange/2);
+                setViewYMin(viewYCenter-viewYRange/2);
+                setViewYMax(viewYCenter+viewYRange/2);
+                emit logChanged();
+                emit logFileErrorHappen();
+            }, Qt::QueuedConnection);
         } else {
             QTextStream logstream(&logfile);
             if (logFile.size()>0) logstream<<'\n';
@@ -262,15 +273,14 @@ void ExChartView::onPluginStart() {
                 logstream << vari->getName()<<',';
             }
             logstream <<"timestamp"<< '\n';
+            QMetaObject::invokeMethod(this, [this]() {
+                setViewXMin(viewXCenter - viewXRange / 2);
+                setViewXMax(viewXCenter + viewXRange / 2);
+                setViewYMin(viewYCenter - viewYRange / 2);
+                setViewYMax(viewYCenter + viewYRange / 2);
+            }, Qt::QueuedConnection);
         }
     }
-    for (auto & line: lines) {line.clear();}
-    for (auto & buf: bufA) {buf.clear();}
-    for (auto & buf: bufB) {buf.clear();}
-    setViewXMin(viewXCenter-viewXRange/2);
-    setViewXMax(viewXCenter+viewXRange/2);
-    setViewYMin(viewYCenter-viewYRange/2);
-    setViewYMax(viewYCenter+viewYRange/2);
 }
 
 void ExChartView::onPluginEnd() {

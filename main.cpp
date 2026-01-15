@@ -10,18 +10,18 @@
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
-
     app.setWindowIcon(QIcon(":/qt/qml/MemRWApp/app-icon.jpg"));
-    QQmlApplicationEngine engine;
 
     Backend::instance().init();
+    QQmlApplicationEngine engine;
+
     Backend::instance().registerVariModel(engine);
 
     engine.loadFromModule("MemRWApp", "Main");
-    // engine.load(QUrl::fromLocalFile("../qml/Main.qml"));
 
-    if (engine.rootObjects().isEmpty())
-        return -1;
+    if (engine.rootObjects().isEmpty()) return -1;
 
-    return app.exec();
+    app.exec();
+
+    return 0;
 }

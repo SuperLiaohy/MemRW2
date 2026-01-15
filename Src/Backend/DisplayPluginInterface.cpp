@@ -10,7 +10,7 @@ DisplayPluginInterface::DisplayPluginInterface(VariComponent *vari) {
     Backend::instance().pushPlugin(this);
 }
 
-DisplayPluginInterface::~DisplayPluginInterface() {
+void DisplayPluginInterface::detachSelf(){
     Backend::instance().erasePlugin(this);
 }
 
