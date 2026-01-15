@@ -84,7 +84,7 @@ QPointF ExLine::findPointIndex(qreal x) {
 
 ExChartView::ExChartView(QQuickItem *parent) : QQuickItem(parent), lineAttrModel(new LineAttrModel(this)), backBuf(&bufA) {
     setFlag(QQuickItem::ItemHasContents, true);
-
+    setAntialiasing(true);
     for (auto & buf: bufA) {
         buf.reserve(400);
     }
