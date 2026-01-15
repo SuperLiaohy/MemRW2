@@ -63,7 +63,17 @@ FluFrame {
             text: Backend.delayUs
             Layout.preferredWidth: 18
         }
-
+        Rectangle { width: 1; Layout.fillHeight: true; color: FluTheme.dark ? "#444" : "#ddd" }
+        FluButton {
+            text: "reset"
+            onClicked: {
+                if (Backend.resetTarge()) {
+                    showSuccess("reset successfully")
+                } else {
+                    showError("reset failed")
+                }
+            }
+        }
         Item { Layout.fillWidth: true }
         FluText {
             text: "Hz: " + Backend.samplingHz

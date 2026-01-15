@@ -95,15 +95,28 @@ QStringList Backend::reloadVari() {
     }
     return variList;
 }
+
+bool Backend::resetTarge() {
+    bool res = true;
+    sync.sendRequest([this,&res]() {
+        res = daplink->resetTarget();
+    },Sync::Event::RESET_EVENT);
+    return res;
+}
+
 void Backend::requestHandler() {
     sync.tryGetRequest([this](Sync::Event e) {
         switch (e) {
             case Sync::Event::UPDATE_VARI_EVENT:
                 daplink->resetMap(pluginContainer);
-                qDebug() << "vari";
+                qDebug() << "vari"<<QDateTime::currentDateTimeUtc();
                 break;
             case Sync::Event::WRITE_EVENT:
-                qDebug() << "write";
+                qDebug() << "write"<<QDateTime::currentDateTimeUtc();
+                break;
+            case Sync::Event::RESET_EVENT:
+                qDebug() << "reset"<<QDateTime::currentDateTimeUtc();
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 break;
             case Sync::Event::CLOSE_EVENT:
                 qDebug() << "close"<<QDateTime::currentDateTimeUtc();

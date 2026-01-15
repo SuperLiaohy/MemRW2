@@ -259,10 +259,6 @@ void ExChartView::onPluginStart() {
         if(!logfile.open(QIODevice::WriteOnly|QIODevice::Append|QIODevice::Text)) {
             log = false;
             QMetaObject::invokeMethod(this, [this]() {
-                setViewXMin(viewXCenter-viewXRange/2);
-                setViewXMax(viewXCenter+viewXRange/2);
-                setViewYMin(viewYCenter-viewYRange/2);
-                setViewYMax(viewYCenter+viewYRange/2);
                 emit logChanged();
                 emit logFileErrorHappen();
             }, Qt::QueuedConnection);
@@ -273,14 +269,15 @@ void ExChartView::onPluginStart() {
                 logstream << vari->getName()<<',';
             }
             logstream <<"timestamp"<< '\n';
-            QMetaObject::invokeMethod(this, [this]() {
-                setViewXMin(viewXCenter - viewXRange / 2);
-                setViewXMax(viewXCenter + viewXRange / 2);
-                setViewYMin(viewYCenter - viewYRange / 2);
-                setViewYMax(viewYCenter + viewYRange / 2);
-            }, Qt::QueuedConnection);
         }
     }
+    QMetaObject::invokeMethod(this, [this]() {
+        setViewXMin(viewXCenter - viewXRange / 2);
+        setViewXMax(viewXCenter + viewXRange / 2);
+        setViewYMin(viewYCenter - viewYRange / 2);
+        setViewYMax(viewYCenter + viewYRange / 2);
+        update();
+    }, Qt::QueuedConnection);
 }
 
 void ExChartView::onPluginEnd() {

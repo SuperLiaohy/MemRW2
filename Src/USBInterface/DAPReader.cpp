@@ -644,3 +644,29 @@ bool DAPReader::writeValueToVari(VariComponent *vari, double value) {
     return true;
 }
 
+bool DAPReader::resetTarget() {
+    constexpr uint32_t address = 0xE000E000UL+0x0D00UL+0x00C;
+    std::vector<DAP::TransferRequest> reg_request;
+    std::vector<DAP::TransferResponse> reg_responses(2);
+    reg_request.reserve(4);
+
+    std::vector<DAP::TransferResponse> responses(2);
+    if  (this->transfer({APWriteRequest(SW::MEM_AP::TAR, address), APReadRequest(SW::MEM_AP::DRW)}, responses)!=DAP::TRANSFER_OK)
+        return false;
+
+    uint32_t origin = responses[0].bit_data.u32;
+    uint32_t data = (uint32_t)((0x5FAUL << 16U)    |
+                           (origin & (7UL << 8U)) |
+                            (1UL << 2U)    );;
+
+    reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::TAR, address));
+    reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::DRW, data));
+    if (transfer(reg_request,reg_responses)!=DAP::TRANSFER_OK) {
+        qDebug()<<"transfer failed,write failed.";
+        return false;
+    }
+    qDebug()<<"resetTarget";
+
+    return true;
+}
+

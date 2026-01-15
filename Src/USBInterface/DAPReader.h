@@ -137,6 +137,7 @@ public:
     }
 
     bool writeValueToVari(VariComponent* vari,double value);
+    bool resetTarget();
 
     void resetMap(const std::vector<DisplayPluginInterface*>& plugins);
     int updateVari(std::vector<DisplayPluginInterface*>& plugins);

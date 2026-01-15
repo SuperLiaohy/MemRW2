@@ -18,6 +18,7 @@ public:
     enum class Event {
         UPDATE_VARI_EVENT,
         WRITE_EVENT,
+        RESET_EVENT,
         CLOSE_EVENT,
     };
     Sync() = default;
@@ -71,6 +72,7 @@ public:
     Q_INVOKABLE bool connect();
     Q_INVOKABLE void disconnect();
     Q_INVOKABLE QStringList reloadVari();
+    Q_INVOKABLE bool resetTarge();
 
     Sync sync{};
     Clock clock{};
