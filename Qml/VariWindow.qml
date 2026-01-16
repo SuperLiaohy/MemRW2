@@ -74,11 +74,7 @@ FluSheet {
             id: reloadBtn
             text: qsTr("重新加载")
             onClicked: {
-                myTreeModel.setTreeData(fileText.text);
-                let variList = Backend.reloadVari()
-                console.log(variList)
-                if (variList.length!==0) failedVariDialog.openList(variList)
-                else showSuccess("Successfully reloaded")
+                sheet.reloadFile()
             }
         }
     }
@@ -348,6 +344,19 @@ FluSheet {
     function openAppendNode(f) {
         sheet.appendAction = f;
         open(FluSheetType.Bottom)
+    }
+
+    function reloadFile() {
+        myTreeModel.setTreeData(fileText.text);
+        let variList = Backend.reloadVari()
+        console.log(variList)
+        if (variList.length!==0) {
+            failedVariDialog.openList(variList)
+            return false
+        } else {
+            showSuccess("Successfully reloaded")
+            return true
+        }
     }
 
     Component.onCompleted: {

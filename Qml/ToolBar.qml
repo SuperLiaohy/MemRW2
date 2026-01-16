@@ -38,6 +38,10 @@ FluFrame {
             Layout.preferredWidth: 65
             onClicked: {
                 if (Backend.running) {
+                    if (autoReloadCheckedBox.checked) {
+                        console.log("=== Reload ===")
+                        if (!sheet.reloadFile()) return;
+                    }
                     console.log("=== Paused ===")
                 } else {
                     console.log("=== Starting ===")
@@ -45,6 +49,13 @@ FluFrame {
                 Backend.running=!Backend.running
             }
         }
+        FluCheckBox{
+            id: autoReloadCheckedBox
+            checked: false
+            text: "reload befor start"
+            textRight: false
+        }
+        Rectangle { width: 1; Layout.fillHeight: true; color: FluTheme.dark ? "#444" : "#ddd" }
         FluText{text:"delay: "}
         FluSlider {
             Layout.preferredWidth: 100
