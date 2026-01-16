@@ -34,6 +34,9 @@
 3. **Table**：Table中的写入都是直接由double进行static_cast转化后写入
 3. **导入dwarf文件（elf，axf）** 目前对C语言变量大部分支持，对于cpp变量提供基本支持
 
+简要视频
+[example_video.mp4](example_video.mp4)
+
 ## 📝 支持的数据类型
 
 > 写入目前支持地址对齐的
