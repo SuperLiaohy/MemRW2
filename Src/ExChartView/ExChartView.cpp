@@ -160,7 +160,6 @@ QSGNode * ExChartView::updatePaintNode(QSGNode *qsg_node, UpdatePaintNodeData *u
             geom->setVertexCount(range);
             lines[i].capacityLater=false;
             geom->setDrawingMode(QSGGeometry::DrawLineStrip);
-            geom->setLineWidth(3.0);
             node->setGeometry(geom);
             node->setFlag(QSGNode::OwnsGeometry);
             QSGFlatColorMaterial *mat = new QSGFlatColorMaterial;

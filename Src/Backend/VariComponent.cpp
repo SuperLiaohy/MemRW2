@@ -25,6 +25,8 @@ void VariComponent::updateFromModel(const QModelIndex &index) {
 
 QString VariComponent::getTypeName() const {
     switch (type) {
+        case Type::BOOL:
+            return QString("boolk");
         case Type::INT8:
             return QString("int8_t");
         case Type::UINT8:
@@ -49,6 +51,8 @@ QString VariComponent::getTypeName() const {
 }
 
 VariComponent::Type VariComponent::getTypeFromString(const QString &type_name) {
+    if (type_name==("bool"))
+        return Type::BOOL;
     if (type_name.contains("uint8_t"))
         return Type::UINT8;
     if (type_name.contains("uint16_t"))

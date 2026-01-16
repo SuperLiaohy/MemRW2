@@ -52,7 +52,7 @@ FluFrame {
         FluCheckBox{
             id: autoReloadCheckedBox
             checked: false
-            text: "reload befor start"
+            text: "reload before start"
             textRight: false
         }
         Rectangle { width: 1; Layout.fillHeight: true; color: FluTheme.dark ? "#444" : "#ddd" }

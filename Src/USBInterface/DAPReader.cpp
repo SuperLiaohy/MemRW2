@@ -448,6 +448,9 @@ void DAPReader::generateMapRequests() {
 void DAPReader::getData(VariComponent *vari, all_form *words) {
         auto offset = vari->getAddress()&0x03;
         switch (vari->getType()) {
+            case VariComponent::Type::BOOL: {
+                vari->fValue = vari->value.i8 = words[0].i8[offset];
+            } break;
             case VariComponent::Type::INT8: {
                 vari->fValue = vari->value.i8 = words[0].i8[offset];
             }
@@ -566,6 +569,15 @@ bool DAPReader::writeValueToVari(VariComponent *vari, double value) {
     volatile all_form data;
     data.u32 = 0;
     switch (vari->getType()) {
+        case VariComponent::Type::BOOL: {
+            DAPReader::sw.ap.csw->Size = 0b000;
+            data.u8[offset] = static_cast<bool>(value);
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::TAR, vari->getAddress()));
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::DRW, data.u32));
+            DAPReader::sw.ap.csw->Size = 0b010;
+            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
+        }break;
         case VariComponent::Type::INT8: {
             DAPReader::sw.ap.csw->Size = 0b000;
             data.i8[offset] = static_cast<int8_t>(value);
