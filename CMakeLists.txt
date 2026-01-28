@@ -11,11 +11,11 @@ pkg_check_modules(LIBUSB REQUIRED IMPORTED_TARGET libusb-1.0)
 
 add_subdirectory(DwarfCpp)
 
-# if(WIN32)
-#         add_executable(MemRW2  WIN32 main.cpp)
-# else()
+if(WIN32)
+        add_executable(MemRW2  WIN32 main.cpp)
+else()
         add_executable(MemRW2 main.cpp)
-# endif()
+endif()
 
 target_include_directories(MemRW2 PUBLIC Src/UIComponent Src/USBInterface Src/ExChartView Src/Backend Src/Variable Src/ExTable)
 qt_add_qml_module(MemRW2

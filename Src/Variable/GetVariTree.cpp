@@ -10,6 +10,7 @@ std::shared_ptr<VariTree> getVariTree(std::string path) {
     using namespace dwarf;
     Dwarf dwarfFile(path.c_str());
     auto variTree = std::make_shared<VariTree>();
+    variTree->setName(path.c_str());
     if (dwarfFile==nullptr) {std::clog << "False" <<std::endl;return variTree;}
     else std::clog << "True" <<std::endl;
     std::size_t count=0;

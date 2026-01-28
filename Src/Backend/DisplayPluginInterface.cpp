@@ -6,7 +6,7 @@
 #include "Backend.hpp"
 #include "VariComponent.hpp"
 
-DisplayPluginInterface::DisplayPluginInterface(VariComponent *vari) {
+DisplayPluginInterface::DisplayPluginInterface(QString settingHeader) : settingHeader(settingHeader){
     Backend::instance().pushPlugin(this);
 }
 

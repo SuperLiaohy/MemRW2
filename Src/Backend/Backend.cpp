@@ -104,6 +104,52 @@ bool Backend::resetTarge() {
     return res;
 }
 
+bool Backend::generateSetting(QUrl path) {
+    QFile file(path.toLocalFile());
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {return false;}
+    QTextStream stream(&file);
+    stream << "MemRW2.setting:" << Qt::endl;
+    stream << "dwarf file:" << variModel->getFileNameUrl() << Qt::endl;
+    for (auto plugin: pluginContainer) {
+        stream << '{' << Qt::endl;
+        plugin->onGeneratePluginSetting(stream);
+        stream << '}' << Qt::endl;
+    }
+    file.close();
+    return true;
+}
+
+bool Backend::loadSetting(QUrl path) {
+    QFile file(path.toLocalFile());
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {return false;}
+    QTextStream stream(&file);
+    QString line;
+    line = stream.readLine();
+    if (line!="MemRW2.setting:") return false;
+    line = stream.readLine();
+    if (!line.startsWith("dwarf file:")) return false;
+    QString dwarf_file =  line.mid(sizeof("dwarf file:")-1);
+    if (dwarf_file.isEmpty()) return false;
+    variModel->setTreeData(dwarf_file);
+    bool isIn = false;
+    while (!stream.atEnd()) {
+        line = stream.readLine();
+        if (line=="{"&&!isIn) {
+            isIn = true;
+            line = stream.readLine();
+            auto set = pluginSettingContainer.find(line);
+            if (set!=pluginSettingContainer.end()) {
+                set->second->onLoadPluginSetting(stream);
+            }
+        } else if (line=="}") {
+            isIn = false;
+        }
+    }
+    file.close();
+    return true;
+}
+
+
 void Backend::requestHandler() {
     sync.tryGetRequest([this](Sync::Event e) {
         switch (e) {
@@ -145,8 +191,10 @@ void Backend::pluginsEnd() {
 
 void Backend::pushPlugin(DisplayPluginInterface *plugin) {
     pluginContainer.push_back(plugin);
+    pluginSettingContainer.emplace(plugin->settingHeader, plugin);
 }
 
 void Backend::erasePlugin(DisplayPluginInterface *plugin) {
     std::erase_if(pluginContainer, [plugin](void *ptr)->bool{return ptr==plugin;});
+    pluginSettingContainer.erase(plugin->settingHeader);
 }

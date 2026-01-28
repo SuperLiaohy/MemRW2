@@ -9,8 +9,10 @@
 namespace dwarf {
 volatile Dwarf* Error::dwarfFile = nullptr;
 Error::~Error() {
-    if (error!=nullptr)
+    if (error!=nullptr) {
+        showMsg();
         dwarf_dealloc_error(dwarfFile->dbg,error);
+    }
 }
 
 bool Error::clear() {

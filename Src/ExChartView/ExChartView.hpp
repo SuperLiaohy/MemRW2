@@ -66,6 +66,8 @@ public:
     void onPluginRunning(qreal runTime) override;
     void onPluginStart() override;
     void onPluginEnd() override;
+    bool onGeneratePluginSetting(QTextStream& stream) override;
+    bool onLoadPluginSetting(QTextStream& stream) override;
     LineAttrModel *getLineAttrModel() {return lineAttrModel;}
     std::atomic<QVector<PointBuf>*> backBuf;
     std::atomic<QVector<PointBuf>*> frontBuf;
@@ -144,4 +146,5 @@ private:
     QVector<PointBuf> bufB;
     qreal lastUpdateTime = 0;
     qreal everySec = 0;
+    bool reloadLater = false;
 };

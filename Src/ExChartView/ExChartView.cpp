@@ -82,7 +82,7 @@ QPointF ExLine::findPointIndex(qreal x) {
     return at(low-1);
 }
 
-ExChartView::ExChartView(QQuickItem *parent) : QQuickItem(parent), lineAttrModel(new LineAttrModel(this)), backBuf(&bufA) {
+ExChartView::ExChartView(QQuickItem *parent) : QQuickItem(parent), DisplayPluginInterface("ChartPlugin.setting:"),lineAttrModel(new LineAttrModel(this)), backBuf(&bufA) {
     setFlag(QQuickItem::ItemHasContents, true);
     setAntialiasing(true);
     for (auto & buf: bufA) {
@@ -112,41 +112,51 @@ QSGNode * ExChartView::updatePaintNode(QSGNode *qsg_node, UpdatePaintNodeData *u
     ++frameCount;
     QSGNode* root = qsg_node?qsg_node:new QSGNode;
     QSGGeometryNode* node = nullptr;    QSGGeometry *geom = nullptr;
-    QSet<int> deleteIndexes;
-    int realIndex=0;
-
-    for (int i = 0; i < lines.size(); ++i) {
-        node = static_cast<QSGGeometryNode *>(root->childAtIndex(realIndex));
-        if (lines[i].deleteLater) {
-            deleteIndexes.insert(i);
-            if (node) {
-                root->removeChildNode(node);
-                delete node;
-                node=nullptr;
-            }
-            continue;
-        }
-        ++realIndex;
-    }
-    if (!deleteIndexes.empty()) {
-        qDebug()<<root->childCount();
-        Backend::instance().sync.sendRequest([this,&deleteIndexes]() {
-            int idx = 0;
-            erase_if(lines, [&deleteIndexes,&idx](auto&){return deleteIndexes.contains(idx++);});
-            idx=0;
-            erase_if(bufA, [&deleteIndexes,&idx](auto&){return deleteIndexes.contains(idx++);});
-            idx=0;
-            erase_if(bufB, [&deleteIndexes,&idx](auto&){return deleteIndexes.contains(idx++);});
-            eraseUnits(deleteIndexes);
-            if (log&&Backend::instance().getRunning()) {
-                QTextStream logstream(&logfile);
-                logstream << '\n';
-                for (auto &vari: variContainer) {
-                    logstream << vari->getName()<<',';
+    if (!reloadLater) {
+        QSet<int> deleteIndexes;
+        int realIndex=0;
+        for (int i = 0; i < lines.size(); ++i) {
+            node = static_cast<QSGGeometryNode *>(root->childAtIndex(realIndex));
+            if (lines[i].deleteLater) {
+                deleteIndexes.insert(i);
+                if (node) {
+                    root->removeChildNode(node);
+                    delete node;
+                    node=nullptr;
                 }
-                logstream <<"timestamp"<< '\n';
+                continue;
             }
-        });
+            ++realIndex;
+        }
+        if (!deleteIndexes.empty()) {
+            qDebug()<<root->childCount();
+            Backend::instance().sync.sendRequest([this,&deleteIndexes]() {
+                int idx = 0;
+                erase_if(lines, [&deleteIndexes,&idx](auto&){return deleteIndexes.contains(idx++);});
+                idx=0;
+                erase_if(bufA, [&deleteIndexes,&idx](auto&){return deleteIndexes.contains(idx++);});
+                idx=0;
+                erase_if(bufB, [&deleteIndexes,&idx](auto&){return deleteIndexes.contains(idx++);});
+                eraseUnits(deleteIndexes);
+                if (log&&Backend::instance().getRunning()) {
+                    QTextStream logstream(&logfile);
+                    logstream << '\n';
+                    for (auto &vari: variContainer) {
+                        logstream << vari->getName()<<',';
+                    }
+                    logstream <<"timestamp"<< '\n';
+                }
+            });
+        }
+    } else {
+        QList<QSGNode*> children;
+        for (QSGNode *child = root->firstChild(); child; child = child->nextSibling())
+            children.append(child);
+        root->removeAllChildNodes();
+        for (auto child: children) {
+            delete child;
+        }
+        reloadLater = false;
     }
     std::size_t lowBound=0,highBound=0,range=0;
     for (int i = 0; i < lines.size(); ++i) {
@@ -255,7 +265,7 @@ void ExChartView::onPluginStart() {
     if (log) {
         if (logfile.isOpen()) logfile.close();
         logfile.setFileName(QUrl(logFile).toLocalFile());
-        if(!logfile.open(QIODevice::WriteOnly|QIODevice::Append|QIODevice::Text)) {
+        if(!logfile.open(QIODevice::WriteOnly|QIODevice::Text)) {
             log = false;
             QMetaObject::invokeMethod(this, [this]() {
                 emit logChanged();
@@ -263,7 +273,6 @@ void ExChartView::onPluginStart() {
             }, Qt::QueuedConnection);
         } else {
             QTextStream logstream(&logfile);
-            if (logFile.size()>0) logstream<<'\n';
             for (auto &vari: variContainer) {
                 logstream << vari->getName()<<',';
             }
@@ -283,6 +292,47 @@ void ExChartView::onPluginEnd() {
     if (log) {
         if (logfile.isOpen()) logfile.close();
     }
+}
+
+bool ExChartView::onGeneratePluginSetting(QTextStream &stream) {
+    stream << settingHeader << Qt::endl;
+    stream << "vari:" << Qt::endl;
+    stream << "capacity:" << variContainer.size() << Qt::endl;
+    for (int i = 0; i < variContainer.size(); ++i) {
+        const auto& config = lineAttrModel->lineAttrs[i]->config;
+        stream << variContainer[i]->getName() << ','
+        << config.name<<',' << config.capacity <<','<< config.visible<<',' << config.color.name()
+        << Qt::endl;
+    }
+    return true;
+}
+
+bool ExChartView::onLoadPluginSetting(QTextStream &stream) {
+    auto line = stream.readLine();
+    if (line!="vari:") return false;
+    line = stream.readLine();
+    if (!line.startsWith("capacity:")) {return false;}
+    qDebug()<<"load chart setting";
+    lineAttrModel->beginResetModel();
+    lineAttrModel->lineAttrs.clear();
+    lines.clear();
+    bufA.clear();
+    bufB.clear();
+    variContainer.clear();
+    reloadLater = true;
+    auto count = line.mid(sizeof("capacity:")-1).toUInt();
+    bufA.resize(count);
+    bufB.resize(count);
+    for (int i = 0; i < count; ++i) {
+        line = stream.readLine();
+        const auto& attr = line.split(',');
+        lines.emplace_back(ExLine(attr[2].toUInt()));
+        lineAttrModel->lineAttrs.emplace_back(std::make_shared<LineAttr>(LineAttr{.group = "", .config = {.color = attr.value(4,""), .name = attr.value(1,""), .visible = static_cast<bool>(attr.value(3,"").toInt()), .capacity = attr.value(2,"").toUInt()}, .view = {}}));
+        pushUnit(attr.value(0,""),"",0,0);
+    }
+    lineAttrModel->endResetModel();
+    update();
+    return true;
 }
 
 QVector<QPointF> ExChartView::findPoints(qreal x) {

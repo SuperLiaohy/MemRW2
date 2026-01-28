@@ -116,7 +116,7 @@ QModelIndex TreeModel::findNode(const QString &nodeSearchName) {
         }
     }
     if (pos < nodeSearchName.size()) {
-            nodesName.append(nodeSearchName.mid(pos, nodesName.size() - pos));
+            nodesName.append(nodeSearchName.mid(pos, nodeSearchName.size() - pos));
     }
     qDebug()<<nodesName;
     if (nodesName.isEmpty()) return QModelIndex();

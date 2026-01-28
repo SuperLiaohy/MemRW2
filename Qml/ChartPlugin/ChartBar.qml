@@ -150,6 +150,7 @@ FluFrame {
     FileDialog {
         id: fileDialog
         nameFilters: ["csv files [*.csv] (*.csv)","txt files [*.txt] (*.txt)", "all files [*.*] (*.*)"]
+        fileMode: FileDialog.SaveFile
 
         onAccepted: {
             console.log("selected:", selectedFile)

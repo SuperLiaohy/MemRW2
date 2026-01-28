@@ -112,7 +112,7 @@ FluFrame {
                         }
                     }
                     FluCheckBox {
-                        checked: true
+                        checked: model.visible
                         onCheckedChanged: {
                             model.visible = checked
                         }

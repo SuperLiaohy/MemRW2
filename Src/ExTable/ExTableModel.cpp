@@ -9,7 +9,7 @@
 
 QStringList ExTableModel::headers{"name","read value", "write vaule",""};
 
-ExTableModel::ExTableModel(QObject *parent) {
+ExTableModel::ExTableModel(QObject *parent) : DisplayPluginInterface("TablePlugin.setting:") {
 }
 
 ExTableModel::~ExTableModel() {
@@ -98,6 +98,39 @@ void ExTableModel::onPluginRunning(qreal runTime) {
             emit dataChanged(index(0,1), index(rowData.size()-1,1), {Qt::DisplayRole, Qt::EditRole});
         },Qt::QueuedConnection);
     }
+}
+
+bool ExTableModel::onGeneratePluginSetting(QTextStream &stream) {
+    stream << settingHeader << Qt::endl;
+    stream << "vari:" << Qt::endl;
+    stream << "capacity:" << variContainer.size() << Qt::endl;
+    for (int i = 0; i < variContainer.size(); ++i) {
+        stream << variContainer[i]->getName()
+        << Qt::endl;
+    }
+    return true;
+}
+
+bool ExTableModel::onLoadPluginSetting(QTextStream &stream) {
+    auto line = stream.readLine();
+    if (line!="vari:") return false;
+    line = stream.readLine();
+    if (!line.startsWith("capacity:")) {return false;}
+    qDebug()<<"load table setting";
+    beginResetModel();
+    rowData.clear();
+    variContainer.clear();
+    auto count = line.mid(sizeof("capacity:")-1).toUInt();
+    rowData.reserve(count);
+    variContainer.reserve(count);
+    for (int i = 0; i < count; ++i) {
+        line = stream.readLine();
+        if (line.isEmpty()) {return false;}
+        rowData.emplace_back(TableVari{line, 0, 0});
+        pushUnit(line,"",0,0);
+    }
+    endResetModel();
+    return true;
 }
 
 void ExTableModel::appendRow(const QString &name,const QString&variName , const QString& type, std::size_t address, std::size_t size) {

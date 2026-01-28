@@ -15,9 +15,7 @@
 SerialDebugInterface DAPReader::sw;
 
 namespace {
-    uint32_t DAP_INTERFACE_CLASS = 0xFF;
-    uint32_t DAP_INTERFACE_SUBCLASS = 0x00;
-    uint32_t DAP_INTERFACE_PROTOCOL = 0x00;
+
 
 
     uint8_t DAP_SWJ_Clock = 0x11;

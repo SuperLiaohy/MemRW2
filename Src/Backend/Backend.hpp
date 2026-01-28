@@ -74,12 +74,15 @@ public:
     Q_INVOKABLE QStringList reloadVari();
     Q_INVOKABLE bool resetTarge();
 
+
     Sync sync{};
     Clock clock{};
     void requestHandler();
     void pluginsRunning(qreal runTime);
     void pluginsStart();
     void pluginsEnd();
+    Q_INVOKABLE bool generateSetting(QUrl path);
+    Q_INVOKABLE bool loadSetting(QUrl path);
 
     void pushPlugin(DisplayPluginInterface *plugin);
     void erasePlugin(DisplayPluginInterface *plugin);
@@ -102,6 +105,7 @@ private:
     quint32 samplingHz{0};
     quint32 delayUs{0};
     std::vector<DisplayPluginInterface*> pluginContainer;
+    std::unordered_map<QString,DisplayPluginInterface*> pluginSettingContainer;
     std::unique_ptr<TreeModel> variModel;
     std::unique_ptr<DAPReader> daplink;
     std::jthread samplingWorker;

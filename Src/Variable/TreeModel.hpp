@@ -5,6 +5,8 @@
 #pragma once
 
 #include <QAbstractItemModel>
+#include <QUrl>
+
 #include "VariTree.hpp"
 
 class TreeModel : public QAbstractItemModel
@@ -32,6 +34,8 @@ public:
     QModelIndex parent(const QModelIndex &index) const override;
     int rowCount(const QModelIndex &parent = {}) const override;
     int columnCount(const QModelIndex &parent = {}) const override;
+
+    Q_INVOKABLE QString getFileNameUrl() const { return QUrl::fromLocalFile(tree->getName().c_str()).toString(); }
 
     Q_INVOKABLE void setTreeData(const QUrl& path);
     Q_INVOKABLE QModelIndex findNode(const QString& nodeName);

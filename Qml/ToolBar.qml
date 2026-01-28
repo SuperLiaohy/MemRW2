@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import FluentUI
+import QtQuick.Dialogs
 
 FluFrame {
     id: frame
@@ -86,6 +87,19 @@ FluFrame {
             }
         }
         Item { Layout.fillWidth: true }
+        FluButton {
+            text: "save setting"
+            onClicked: {
+                settingDialog.openMode(0)
+            }
+        }
+        FluButton {
+            text: "load setting"
+            enabled: !Backend.running
+            onClicked: {
+                settingDialog.openMode(1)
+            }
+        }
         FluText {
             text: "Hz: " + Backend.samplingHz
             color: FluColors.Blue.normal
@@ -98,4 +112,32 @@ FluFrame {
             font.bold: true
         }
     }
+
+    FileDialog {
+        id: settingDialog
+        nameFilters: ["setting files [*.setting] (*.setting)"]
+        // selectExisting: false
+        fileMode: FileDialog.SaveFile
+        property int userMode: 0
+        onAccepted: {
+            console.log("selected:", selectedFile)
+            if (userMode===0) {
+                if (Backend.generateSetting(selectedFile)) {
+                    showSuccess("save setting")
+                } else showError("failed")
+            } else if (userMode===1) {
+                if (Backend.loadSetting(selectedFile)){
+                    sheet.setFileTip()
+                    showSuccess("load setting")
+                } else showError("failed")
+            }
+        }
+        function openMode(m) {
+            userMode = m
+            if (userMode===0) {fileMode= FileDialog.SaveFile}
+            else if (userMode===1) {fileMode = FileDialog.OpenFile}
+            settingDialog.open();
+        }
+    }
+
 }

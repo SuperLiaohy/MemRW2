@@ -11,6 +11,10 @@
 #include <algorithm>
 #include <memory>
 
+constexpr uint32_t DAP_INTERFACE_CLASS = 0xFF;
+constexpr uint32_t DAP_INTERFACE_SUBCLASS = 0x00;
+constexpr uint32_t DAP_INTERFACE_PROTOCOL = 0x00;
+
 struct USBInterface {
     std::string interface_name;
     int settingNum;
@@ -57,13 +61,15 @@ struct DapLinkDesc {
             std::ranges::transform(trans_interface_name, trans_interface_name.begin(), tolower);
             result = (trans_interface_name.find("cmsis-dap") != std::string::npos);
             if (result && !dev->interfaces[i].bulk_in_endpoints.empty() && !dev->interfaces[i].bulk_out_endpoints.empty()) {
-                this->interface_num = i;
-                this->interface_name = dev->interfaces[i].interface_name;
-                this->bulk_in_endpoints = dev->interfaces[i].bulk_in_endpoints[0];
-                if (dev->interfaces[i].bulk_in_endpoints.size()>1)
-                    this->bulk_in_swo_endpoints = dev->interfaces[i].bulk_in_endpoints[1];
-                this->bulk_out_endpoints = dev->interfaces[i].bulk_out_endpoints[0];
-                return;
+                if (dev->interfaces[i].bInterfaceClass == DAP_INTERFACE_CLASS && dev->interfaces[i].bInterfaceSubClass == DAP_INTERFACE_SUBCLASS && dev->interfaces[i].bInterfaceProtocol==DAP_INTERFACE_PROTOCOL) {
+                    this->interface_num = i;
+                    this->interface_name = dev->interfaces[i].interface_name;
+                    this->bulk_in_endpoints = dev->interfaces[i].bulk_in_endpoints[0];
+                    if (dev->interfaces[i].bulk_in_endpoints.size()>1)
+                        this->bulk_in_swo_endpoints = dev->interfaces[i].bulk_in_endpoints[1];
+                    this->bulk_out_endpoints = dev->interfaces[i].bulk_out_endpoints[0];
+                    return;
+                }
             }
         }
         throw std::runtime_error("DAP Bulk interface not found");

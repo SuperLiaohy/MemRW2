@@ -359,6 +359,11 @@ FluSheet {
         }
     }
 
+    function setFileTip() {
+        fileText.text = myTreeModel.getFileNameUrl()
+        sheet.reloadFile()
+    }
+
     Component.onCompleted: {
         console.log("variWin open")
     }

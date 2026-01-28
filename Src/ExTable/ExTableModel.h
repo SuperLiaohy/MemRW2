@@ -29,7 +29,6 @@ public:
     explicit ExTableModel(QObject *parent = nullptr);
     ~ExTableModel();
 
-    // 必须实现的接口
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
@@ -38,8 +37,8 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
     void onPluginRunning(qreal runTime) override;
-
-    // 自定义接口 - 供 QML 调用
+    bool onGeneratePluginSetting(QTextStream &stream) override;
+    bool onLoadPluginSetting(QTextStream &stream) override;
     Q_INVOKABLE void appendRow(const QString &name,const QString&variName , const QString& type, std::size_t address, std::size_t size);
     Q_INVOKABLE void removeRow(int row);
     Q_INVOKABLE bool sendWriteRequest(int row);
