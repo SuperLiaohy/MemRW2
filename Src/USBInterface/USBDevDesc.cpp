@@ -7,19 +7,34 @@
 #include <iostream>
 
 bool USBDevDesc::is_daplink() {
+    bool result = false;
     std::string trans_name = this->product_string;
     std::ranges::transform(trans_name, trans_name.begin(), tolower);
-    return (trans_name.find("cmsis") != std::string::npos ||
-            trans_name.find("dap") != std::string::npos ||
-            trans_name.find("debug") != std::string::npos ||
-            trans_name.find("link") != std::string::npos);
+    result = (trans_name.find("cmsis-dap") != std::string::npos);
+
+    for (const auto& interface: this->interfaces) {
+        if (result) break;
+        std::string trans_interface_name = interface.interface_name;
+        std::ranges::transform(trans_interface_name, trans_interface_name.begin(), tolower);
+        result = (trans_interface_name.find("cmsis-dap") != std::string::npos);
+    }
+
+    return result;
 };
 
+
+std::shared_ptr<DapLinkDesc> findDapLinkDesc(const std::vector<std::shared_ptr<USBDevDesc>>& devs) {
+    for (auto& dev : devs) {
+        if (dev->is_daplink()) {
+            return std::make_shared<DapLinkDesc>(dev);
+        }
+    }
+    return nullptr;
+}
 
 bool is_usb_bulk(const std::string &str) {
     std::string trans_name = str;
     std::ranges::transform(trans_name,trans_name.begin(), tolower);
-    return (trans_name.find('2') != std::string::npos ||
-            trans_name.find("bulk") != std::string::npos);
+    return (trans_name.find("cmsis-dap") != std::string::npos);
 }
 

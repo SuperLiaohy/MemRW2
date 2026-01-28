@@ -29,12 +29,12 @@ namespace {
     uint8_t DAP_Connect = 0x02;
 }
 
-DAPReader::DAPReader() : response_buffer(255 * 5 + 3), mapRequestBuf(255*5+3),requestCount(0) {
+DAPReader::DAPReader() : response_buffer(255 * 5 + 3), mapRequestBuf(255 * 5 + 3), requestCount(0) {
     // auto_connect();
 }
 
 DAPReader::~DAPReader() {
-    qDebug()<<"fuck dap";
+    qDebug() << "fuck dap";
     disconnect();
 }
 
@@ -43,98 +43,80 @@ bool DAPReader::auto_connect() {
     libusb_device **device_list = nullptr;
     int32_t device_count = libusb_get_device_list(USBBulk::Context(), &device_list);
     if (device_count < 0) {
-        std::cout << "Could not find any usb devices."<<std::endl;
+        std::cout << "Could not find any usb devices." << std::endl;
         return false;
     }
-    std::vector<std::shared_ptr<USBDevDesc> > devs;
+    devs.clear();
+    devs.reserve(device_count);
     for (ssize_t i = 0; i < device_count; ++i) {
         libusb_device *device = device_list[i];
         libusb_device_descriptor desc{};
         auto item = std::make_shared<USBDevDesc>();
 
-        // 获取设备描述符
         int result = libusb_get_device_descriptor(device, &desc);
-        if (result != LIBUSB_SUCCESS)
-            continue;
-
-        // 打开设备以获取字符串描述符
-        libusb_device_handle *handle = nullptr;
-        result = libusb_open(device, &handle);
-        if (result != LIBUSB_SUCCESS || handle == nullptr)
-            continue;
-
-        std::string product_string = "N/A";
-        // 获取product string (iProduct字段)
-        if (desc.iProduct) {
-            char string_buffer[256];
-            result = libusb_get_string_descriptor_ascii(handle, desc.iProduct,
-                                                        reinterpret_cast<unsigned char *>(string_buffer),
-                                                        sizeof(string_buffer));
-            if (result > 0) {
-                product_string = std::string(string_buffer);
-            }
-        }
-        libusb_close(handle);
+        if (result != LIBUSB_SUCCESS) continue;
 
         item->vendor_id = desc.idVendor;
         item->product_id = desc.idProduct;
+
+        libusb_device_handle *handle = nullptr;
+        result = libusb_open(device, &handle);
+        if (result != LIBUSB_SUCCESS || handle == nullptr) continue;
+
+        std::string product_string = "N/A";
+        devs.push_back(item);
+
+        char string_buffer[256]{};
+        if (libusb_get_string_descriptor_ascii(handle, desc.iProduct,
+                                                    reinterpret_cast<unsigned char *>(string_buffer),
+                                                    sizeof(string_buffer)) > 0)
+            product_string = std::string(string_buffer);
+
         item->product_string = product_string;
-        if (item->is_daplink())
-            devs.push_back(item);
+
+        libusb_config_descriptor *config_descriptor = nullptr;
+        if (libusb_get_active_config_descriptor(libusb_get_device(handle), &config_descriptor)!=LIBUSB_SUCCESS) continue;
+
+        item->interfaces.reserve(config_descriptor->bNumInterfaces);
+        for (int j = 0; j < config_descriptor->bNumInterfaces; ++j) {
+            const libusb_interface_descriptor *interface = config_descriptor->interface[j].altsetting;
+
+            std::string interface_string = "N/A";
+
+            char interface_buffer[256]{};
+            if (libusb_get_string_descriptor_ascii(handle, interface->iInterface,
+                                                        reinterpret_cast<unsigned char *>(interface_buffer),
+                                                        sizeof(interface_buffer)) > 0)
+                interface_string = std::string(interface_buffer);
+
+            std::vector<uint8_t> bulkIn;
+            std::vector<uint8_t> bulkOut;
+            for (int k = 0; k < interface->bNumEndpoints; ++k) {
+                if ((interface->endpoint[k].bmAttributes& 0x03) != LIBUSB_TRANSFER_TYPE_BULK) continue;
+                if ((interface->endpoint[k].bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_IN) {
+                    bulkIn.emplace_back(interface->endpoint[k].bEndpointAddress);
+                } else bulkOut.emplace_back(interface->endpoint[k].bEndpointAddress);
+            }
+
+            item->interfaces.emplace_back(USBInterface{.interface_name = interface_string, .settingNum = config_descriptor->interface[j].num_altsetting,  .bInterfaceClass = interface->bInterfaceClass, .bInterfaceSubClass = interface->bInterfaceSubClass, .bInterfaceProtocol = interface->bInterfaceProtocol, .bulk_in_endpoints = bulkIn, .bulk_out_endpoints = bulkOut});
+        }
+        std::cout << *item << std::endl;
+        libusb_close(handle);
     }
+
     libusb_free_device_list(device_list, device_count);
 
-    bool found = false;
-    for (auto &usb_desc: devs) {
-        libusb_device_handle *handle = nullptr;
-        libusb_config_descriptor *config_descriptor = nullptr;
-        handle = libusb_open_device_with_vid_pid(USBBulk::Context(), usb_desc->vendor_id, usb_desc->product_id);
-        if (!handle) continue;
-        int res = libusb_get_active_config_descriptor(libusb_get_device(handle), &config_descriptor);
-        if (res != 0) continue;
-        for (int i = 0; i < config_descriptor->bNumInterfaces; ++i) {
-            const libusb_interface &interface = config_descriptor->interface[i];
-            // default use index 0
-            if (interface.num_altsetting > 0) {
-                const libusb_interface_descriptor *desc = interface.altsetting;
-                if (desc->iInterface > 0) {
-                    usb_desc->interface_name = "N/A";
-                    char name_data[256];
-                    if (libusb_get_string_descriptor_ascii(handle, desc->iInterface,
-                                                           reinterpret_cast<unsigned char *>(name_data),
-                                                           sizeof(name_data)))
-                        usb_desc->interface_name = name_data;
-                    if (desc->bInterfaceClass == DAP_INTERFACE_CLASS &&
-                        desc->bInterfaceSubClass == DAP_INTERFACE_SUBCLASS &&
-                        desc->bInterfaceProtocol == DAP_INTERFACE_PROTOCOL) {
-                        usb_desc->interface_num = desc->bInterfaceNumber;
-                        bool bulkinHostPC = true;
-                        for (int j = 0; j < desc->bNumEndpoints; ++j) {
-                            if ((desc->endpoint[j].bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_IN && bulkinHostPC){
-                                usb_desc->bulk_in_endpoints = desc->endpoint[j].bEndpointAddress;
-                                bulkinHostPC = false;
-                            }
-                            else usb_desc->bulk_out_endpoints = desc->endpoint[j].bEndpointAddress;
-                        }
-                        found = true;
-                        break;
-                    }
-                }
-            }
-        }
-        libusb_close(handle);
-        libusb_free_config_descriptor(config_descriptor);
-        if (found == true) {
-            usb = std::make_unique<USBBulk>(usb_desc);
-            break;
-        };
-    }
-    if (usb == nullptr) {
+
+    try {
+        auto dev = findDapLinkDesc(devs);
+        if (dev==nullptr) {std::cout << "no usb bulk be found." << std::endl; return false;}
+        usb = std::make_unique<USBBulk>(dev);
+        std::cout << "connect bulk:\n" << usb->desc << std::endl;
+        return true;
+    } catch (...) {
         std::cout << "no usb bulk be found." << std::endl;
         return false;
     }
-    std::cout << usb->desc << std::endl;
-    return true;
 }
 
 void DAPReader::disconnect() {
@@ -186,7 +168,6 @@ uint32_t DAPReader::read_mem32(uint32_t addr) {
 }
 
 void DAPReader::write_mem8(uint32_t addr, uint8_t data) {
-
 }
 
 void DAPReader::write_mem16(uint32_t addr, uint16_t data) {
@@ -220,7 +201,7 @@ void DAPReader::auto_configure_ap() {
         std::cout << sw.ap.csw.value() << std::endl;
 
         sw.ap.csw->AddrInc = 0b01;
-        this->transfer(APWriteRequest(SW::MEM_AP::CSW,std::bit_cast<uint32_t>(sw.ap.csw.value())), response);
+        this->transfer(APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(sw.ap.csw.value())), response);
 
         this->transfer(APReadRequest(SW::MEM_AP::CSW), response);
         sw.ap.csw = std::bit_cast<SW::MEM_AP::CSWReg>(response.bit_data);
@@ -233,7 +214,7 @@ void DAPReader::auto_configure_ap() {
         // csw = std::bit_cast<SW::MEM_AP::CSWReg>(response.data);
         // std::cout << csw << std::endl;
         ++APSEL;
-        if (APSEL>100)
+        if (APSEL > 100)
             break;
     }
 }
@@ -356,13 +337,13 @@ DAP::TransferRequest DAPReader::Request(uint8_t APnDP, uint8_t RnW, uint8_t reg,
 void DAPReader::resetMap(const std::vector<DisplayPluginInterface *> &plugins) {
     addrMap.clear();
     for (auto plugin: plugins) {
-        for (auto & variComponent: plugin->variContainer) {
-            auto base = variComponent->getAddress()&0xfffffffC;
-            addrMap.insert({base,variComponent.get()});
-            if (((variComponent->getAddress()&0x00000003)+variComponent->getSize())>4) {
-                addrMap.insert({base+4,nullptr});
-                if (((variComponent->getAddress()&0x00000003)+variComponent->getSize())>8)
-                    addrMap.insert({base+8,nullptr});
+        for (auto &variComponent: plugin->variContainer) {
+            auto base = variComponent->getAddress() & 0xfffffffC;
+            addrMap.insert({base, variComponent.get()});
+            if (((variComponent->getAddress() & 0x00000003) + variComponent->getSize()) > 4) {
+                addrMap.insert({base + 4, nullptr});
+                if (((variComponent->getAddress() & 0x00000003) + variComponent->getSize()) > 8)
+                    addrMap.insert({base + 8, nullptr});
             }
         }
     }
@@ -372,25 +353,25 @@ void DAPReader::resetMap(const std::vector<DisplayPluginInterface *> &plugins) {
 int DAPReader::transferFromMapRequests() {
     usb->transmit(mapRequestBuf);
     usb->receive(response_buffer);
-    if (response_buffer.size()<3) return DAP::DAP_ERROR;
+    if (response_buffer.size() < 3) return DAP::DAP_ERROR;
     if (response_buffer[0] != DAP_Transfer) return DAP::DAP_ERROR;
     if (response_buffer[2] != DAP::TRANSFER_OK) return response_buffer[2];
-    if (response_buffer[1]!=(requestCount)) return DAP::DAP_ERROR;
+    if (response_buffer[1] != (requestCount)) return DAP::DAP_ERROR;
     return DAP::TRANSFER_OK;
 }
 
 int DAPReader::updateVari(std::vector<DisplayPluginInterface *> &plugins) {
     auto res = transferFromMapRequests();
-    if (res!=DAP::TRANSFER_OK)return res;
+    if (res != DAP::TRANSFER_OK)return res;
     auto word = reinterpret_cast<all_form *>(&response_buffer[3]);
     std::size_t last = 0;
     std::size_t index = -1;
     for (auto item: addrMap) {
         auto base = item.first;
         auto vari = item.second;
-        if (vari==nullptr)continue;
-        if (last!=base) {++index;}
-        getData(vari,&word[index]);
+        if (vari == nullptr)continue;
+        if (last != base) { ++index; }
+        getData(vari, &word[index]);
         last = base;
     }
     return DAP::TRANSFER_OK;
@@ -400,9 +381,9 @@ void DAPReader::pushRequest(const DAP::TransferRequest &request) {
     if (request.request.RnW == 1 && request.request.ValueMatch == 0 && request.request.MatchMask == 0) {
         mapRequestBuf.push_back(std::bit_cast<std::uint8_t>(request.request));
     } else {
-        mapRequestBuf.resize(mapRequestBuf.size()+5);
-        uint8_t*ptr=&mapRequestBuf[mapRequestBuf.size()-5];
-        memcpy(ptr,&request,5);
+        mapRequestBuf.resize(mapRequestBuf.size() + 5);
+        uint8_t *ptr = &mapRequestBuf[mapRequestBuf.size() - 5];
+        memcpy(ptr, &request, 5);
     }
 }
 
@@ -412,15 +393,15 @@ void DAPReader::pushMapRequests(std::size_t addr) {
             ++requestCount;
             pushRequest(APWriteRequest(SW::MEM_AP::TAR, addr));
         }
-        sw.ap.tar->data = addr+4;
-        if ((sw.ap.tar->data)&(0x400-1)) {
+        sw.ap.tar->data = addr + 4;
+        if ((sw.ap.tar->data) & (0x400 - 1)) {
             sw.ap.tar.reset();
         }
     } else {
         ++requestCount;
         pushRequest(APWriteRequest(SW::MEM_AP::TAR, addr));
-        sw.ap.tar = SW::MEM_AP::TARReg(addr+4);
-        if ((sw.ap.tar->data)&(0x400-1)) {
+        sw.ap.tar = SW::MEM_AP::TARReg(addr + 4);
+        if ((sw.ap.tar->data) & (0x400 - 1)) {
             sw.ap.tar.reset();
         }
     }
@@ -429,140 +410,142 @@ void DAPReader::pushMapRequests(std::size_t addr) {
 }
 
 void DAPReader::generateMapRequests() {
-    requestCount=0;
+    requestCount = 0;
     mapRequestBuf.clear();
     mapRequestBuf.push_back(5);
     mapRequestBuf.push_back(0);
     mapRequestBuf.push_back(0);
     std::size_t last = 0;
-    for (auto & addr: addrMap) {
-        auto& base = addr.first;
-        if (last!=base) {
+    for (auto &addr: addrMap) {
+        auto &base = addr.first;
+        if (last != base) {
             pushMapRequests(base);
-            last=base;
+            last = base;
         }
     }
-    mapRequestBuf[2]=requestCount;
+    mapRequestBuf[2] = requestCount;
 }
 
 void DAPReader::getData(VariComponent *vari, all_form *words) {
-        auto offset = vari->getAddress()&0x03;
-        switch (vari->getType()) {
-            case VariComponent::Type::BOOL: {
-                vari->fValue = vari->value.i8 = words[0].i8[offset];
-            } break;
-            case VariComponent::Type::INT8: {
-                vari->fValue = vari->value.i8 = words[0].i8[offset];
-            }
-            break;
-            case VariComponent::Type::UINT8: {
-                vari->fValue = vari->value.u8 = words[0].u8[offset];;
-            }
-            break;
-            case VariComponent::Type::INT16: {
-                if (offset > 2)
-                    vari->fValue = vari->value.i16 = std::bit_cast<int16_t>(
-                        static_cast<uint16_t>((words[0].u8[offset] | words[1].u8[0] << 8)));
-                else
-                    vari->fValue = vari->value.i16 = std::bit_cast<int16_t>(
-                        static_cast<uint16_t>((words[0].u8[offset] | words[0].u8[offset + 1] << 8)));
-            }
-            break;
-            case VariComponent::Type::UINT16: {
-                if (offset > 2)
-                    vari->fValue = vari->value.u16 = (static_cast<uint16_t>((words[0].u8[offset] | words[1].u8[0] << 8)));
-                else
-                    vari->fValue = vari->value.u16 = (static_cast<uint16_t>((words[0].u8[offset] | words[0].u8[offset + 1] << 8)));
-            }
-            break;
-            case VariComponent::Type::INT32: {
-                switch (offset) {
-                    case 0:
-                        vari->fValue = vari->value.i32 = words[0].i32;
-                        break;
-                    case 1:
-                        vari->fValue = vari->value.i32 = static_cast<int32_t>(words[0].u8[1]
-                                                               | words[0].u8[2] << 8
-                                                               | words[0].u8[3] << 16
-                                                               | words[1].u8[0] << 24);
-                        break;
-                    case 2:
-                        vari->fValue = vari->value.i32 = static_cast<int32_t>(words[0].u16[1]
-                                                               | words[1].u16[0] << 16);
-                        break;
-                    case 3:
-                        vari->fValue = vari->value.i32 = static_cast<int32_t>(words[0].u8[3]
-                                                               | words[1].u8[0] << 8
-                                                               | words[1].u8[1] << 16
-                                                               | words[1].u8[2] << 24);
-                        break;
-                    default:
-                        break;
-                }
-            }
-            break;
-            case VariComponent::Type::UINT32: {
-                switch (offset) {
-                    case 0:
-                        vari->fValue = vari->value.u32 = words[0].u32;
-                        break;
-                    case 1:
-                        vari->fValue = vari->value.u32 = (words[0].u8[1]
-                                           | words[0].u8[2] << 8
-                                           | words[0].u8[3] << 16
-                                           | words[1].u8[0] << 24);
-                        break;
-                    case 2:
-                        vari->fValue = vari->value.u32 = (words[0].u16[1]
-                                           | words[1].u16[0] << 16);
-                        break;
-                    case 3:
-                        vari->fValue = vari->value.u32 = (words[0].u8[3]
-                                           | words[1].u8[0] << 8
-                                           | words[1].u8[1] << 16
-                                           | words[1].u8[2] << 24);
-                        break;
-                    default:
-                        break;
-                }
-            }
-            break;
-            case VariComponent::Type::FLOAT: {
-                switch (offset) {
-                    case 0:
-                        vari->fValue = vari->value.f32 = words[0].f32;
-                        break;
-                    case 1:
-                        vari->fValue = vari->value.f32 = std::bit_cast<float>(words[0].u8[1]
-                                                               | words[0].u8[2] << 8
-                                                               | words[0].u8[3] << 16
-                                                               | words[1].u8[0] << 24);
-                        break;
-                    case 2:
-                        vari->fValue = vari->value.f32 = std::bit_cast<float>(words[0].u16[1]
-                                                               | words[1].u16[0] << 16);
-                        break;
-                    case 3:
-                        vari->fValue = vari->value.f32 = std::bit_cast<float>(words[0].u8[3]
-                                                               | words[1].u8[0] << 8
-                                                               | words[1].u8[1] << 16
-                                                               | words[1].u8[2] << 24);
-                        break;
-                    default:
-                        break;
-                }
-            }
-            break;
-            case VariComponent::Type::DOUBLE:
-            case VariComponent::Type::INT64:
-            case VariComponent::Type::UINT64:
-                break;
+    auto offset = vari->getAddress() & 0x03;
+    switch (vari->getType()) {
+        case VariComponent::Type::BOOL: {
+            vari->fValue = vari->value.i8 = words[0].i8[offset];
         }
+        break;
+        case VariComponent::Type::INT8: {
+            vari->fValue = vari->value.i8 = words[0].i8[offset];
+        }
+        break;
+        case VariComponent::Type::UINT8: {
+            vari->fValue = vari->value.u8 = words[0].u8[offset];;
+        }
+        break;
+        case VariComponent::Type::INT16: {
+            if (offset > 2)
+                vari->fValue = vari->value.i16 = std::bit_cast<int16_t>(
+                                   static_cast<uint16_t>((words[0].u8[offset] | words[1].u8[0] << 8)));
+            else
+                vari->fValue = vari->value.i16 = std::bit_cast<int16_t>(
+                                   static_cast<uint16_t>((words[0].u8[offset] | words[0].u8[offset + 1] << 8)));
+        }
+        break;
+        case VariComponent::Type::UINT16: {
+            if (offset > 2)
+                vari->fValue = vari->value.u16 = (static_cast<uint16_t>((words[0].u8[offset] | words[1].u8[0] << 8)));
+            else
+                vari->fValue = vari->value.u16 = (static_cast<uint16_t>((
+                                   words[0].u8[offset] | words[0].u8[offset + 1] << 8)));
+        }
+        break;
+        case VariComponent::Type::INT32: {
+            switch (offset) {
+                case 0:
+                    vari->fValue = vari->value.i32 = words[0].i32;
+                    break;
+                case 1:
+                    vari->fValue = vari->value.i32 = static_cast<int32_t>(words[0].u8[1]
+                                                                          | words[0].u8[2] << 8
+                                                                          | words[0].u8[3] << 16
+                                                                          | words[1].u8[0] << 24);
+                    break;
+                case 2:
+                    vari->fValue = vari->value.i32 = static_cast<int32_t>(words[0].u16[1]
+                                                                          | words[1].u16[0] << 16);
+                    break;
+                case 3:
+                    vari->fValue = vari->value.i32 = static_cast<int32_t>(words[0].u8[3]
+                                                                          | words[1].u8[0] << 8
+                                                                          | words[1].u8[1] << 16
+                                                                          | words[1].u8[2] << 24);
+                    break;
+                default:
+                    break;
+            }
+        }
+        break;
+        case VariComponent::Type::UINT32: {
+            switch (offset) {
+                case 0:
+                    vari->fValue = vari->value.u32 = words[0].u32;
+                    break;
+                case 1:
+                    vari->fValue = vari->value.u32 = (words[0].u8[1]
+                                                      | words[0].u8[2] << 8
+                                                      | words[0].u8[3] << 16
+                                                      | words[1].u8[0] << 24);
+                    break;
+                case 2:
+                    vari->fValue = vari->value.u32 = (words[0].u16[1]
+                                                      | words[1].u16[0] << 16);
+                    break;
+                case 3:
+                    vari->fValue = vari->value.u32 = (words[0].u8[3]
+                                                      | words[1].u8[0] << 8
+                                                      | words[1].u8[1] << 16
+                                                      | words[1].u8[2] << 24);
+                    break;
+                default:
+                    break;
+            }
+        }
+        break;
+        case VariComponent::Type::FLOAT: {
+            switch (offset) {
+                case 0:
+                    vari->fValue = vari->value.f32 = words[0].f32;
+                    break;
+                case 1:
+                    vari->fValue = vari->value.f32 = std::bit_cast<float>(words[0].u8[1]
+                                                                          | words[0].u8[2] << 8
+                                                                          | words[0].u8[3] << 16
+                                                                          | words[1].u8[0] << 24);
+                    break;
+                case 2:
+                    vari->fValue = vari->value.f32 = std::bit_cast<float>(words[0].u16[1]
+                                                                          | words[1].u16[0] << 16);
+                    break;
+                case 3:
+                    vari->fValue = vari->value.f32 = std::bit_cast<float>(words[0].u8[3]
+                                                                          | words[1].u8[0] << 8
+                                                                          | words[1].u8[1] << 16
+                                                                          | words[1].u8[2] << 24);
+                    break;
+                default:
+                    break;
+            }
+        }
+        break;
+        case VariComponent::Type::DOUBLE:
+        case VariComponent::Type::INT64:
+        case VariComponent::Type::UINT64:
+            break;
+    }
 }
 
 bool DAPReader::writeValueToVari(VariComponent *vari, double value) {
-    auto offset = vari->getAddress()&0x03;
-    auto base = vari->getAddress()-offset;
+    auto offset = vari->getAddress() & 0x03;
+    auto base = vari->getAddress() - offset;
     std::vector<DAP::TransferRequest> reg_request;
     std::vector<DAP::TransferResponse> reg_responses(4);
     reg_request.reserve(4);
@@ -572,67 +555,79 @@ bool DAPReader::writeValueToVari(VariComponent *vari, double value) {
         case VariComponent::Type::BOOL: {
             DAPReader::sw.ap.csw->Size = 0b000;
             data.u8[offset] = static_cast<bool>(value);
-            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
+            reg_request.push_back(
+                DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
             reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::TAR, vari->getAddress()));
             reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::DRW, data.u32));
             DAPReader::sw.ap.csw->Size = 0b010;
-            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
-        }break;
+            reg_request.push_back(
+                DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
+        }
+        break;
         case VariComponent::Type::INT8: {
             DAPReader::sw.ap.csw->Size = 0b000;
             data.i8[offset] = static_cast<int8_t>(value);
-            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
+            reg_request.push_back(
+                DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
             reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::TAR, vari->getAddress()));
             reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::DRW, data.u32));
             DAPReader::sw.ap.csw->Size = 0b010;
-            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
+            reg_request.push_back(
+                DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
         }
-            break;
+        break;
         case VariComponent::Type::UINT8: {
             DAPReader::sw.ap.csw->Size = 0b000;
             data.u8[offset] = static_cast<uint8_t>(value);
-            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
+            reg_request.push_back(
+                DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
             reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::TAR, vari->getAddress()));
             reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::DRW, data.u32));
             DAPReader::sw.ap.csw->Size = 0b010;
-            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
+            reg_request.push_back(
+                DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
         }
-            break;
+        break;
         case VariComponent::Type::INT16: {
-            if (offset==1||offset==3) return false;
+            if (offset == 1 || offset == 3) return false;
             DAPReader::sw.ap.csw->Size = 0b001;
-            data.i16[offset/2] = static_cast<int16_t>(value);
-            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
+            data.i16[offset / 2] = static_cast<int16_t>(value);
+            reg_request.push_back(
+                DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
             reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::TAR, vari->getAddress()));
             reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::DRW, data.u32));
             DAPReader::sw.ap.csw->Size = 0b010;
-            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
+            reg_request.push_back(
+                DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
         }
-            break;
-        case VariComponent::Type::UINT16:{
-            if (offset==1||offset==3) return false;
+        break;
+        case VariComponent::Type::UINT16: {
+            if (offset == 1 || offset == 3) return false;
             DAPReader::sw.ap.csw->Size = 0b001;
-            data.i16[offset/2] = static_cast<uint16_t>(value);
-            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
+            data.i16[offset / 2] = static_cast<uint16_t>(value);
+            reg_request.push_back(
+                DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
             reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::TAR, vari->getAddress()));
             reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::DRW, data.u32));
             DAPReader::sw.ap.csw->Size = 0b010;
-            reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
+            reg_request.push_back(
+                DAPReader::APWriteRequest(SW::MEM_AP::CSW, std::bit_cast<uint32_t>(*DAPReader::sw.ap.csw)));
         }
-            break;
+        break;
         case VariComponent::Type::INT32: {
-            if (offset!=0) return false;
+            if (offset != 0) return false;
             data.i32 = static_cast<int32_t>(value);
             reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::TAR, vari->getAddress()));
             reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::DRW, data.u32));
         }
-            break;
+        break;
         case VariComponent::Type::UINT32: {
-            if (offset!=0) return false;
+            if (offset != 0) return false;
             data.u32 = static_cast<uint32_t>(value);
             reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::TAR, vari->getAddress()));
             reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::DRW, data.u32));
-        }break;
+        }
+        break;
         case VariComponent::Type::INT64:
             return false;
             break;
@@ -640,7 +635,7 @@ bool DAPReader::writeValueToVari(VariComponent *vari, double value) {
             return false;
             break;
         case VariComponent::Type::FLOAT:
-            if (offset!=0) return false;
+            if (offset != 0) return false;
             data.f32 = static_cast<float>(value);
             reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::TAR, vari->getAddress()));
             reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::DRW, data.u32));
@@ -649,36 +644,36 @@ bool DAPReader::writeValueToVari(VariComponent *vari, double value) {
             return false;
             break;
     }
-    if (transfer(reg_request,reg_responses)!=DAP::TRANSFER_OK) {
-        qDebug()<<"transfer failed,write failed.";
+    if (transfer(reg_request, reg_responses) != DAP::TRANSFER_OK) {
+        qDebug() << "transfer failed,write failed.";
         return false;
     }
     return true;
 }
 
 bool DAPReader::resetTarget() {
-    constexpr uint32_t address = 0xE000E000UL+0x0D00UL+0x00C;
+    constexpr uint32_t address = 0xE000E000UL + 0x0D00UL + 0x00C;
     std::vector<DAP::TransferRequest> reg_request;
     std::vector<DAP::TransferResponse> reg_responses(2);
     reg_request.reserve(4);
 
     std::vector<DAP::TransferResponse> responses(2);
-    if  (this->transfer({APWriteRequest(SW::MEM_AP::TAR, address), APReadRequest(SW::MEM_AP::DRW)}, responses)!=DAP::TRANSFER_OK)
+    if (this->transfer({APWriteRequest(SW::MEM_AP::TAR, address), APReadRequest(SW::MEM_AP::DRW)}, responses) !=
+        DAP::TRANSFER_OK)
         return false;
 
     uint32_t origin = responses[0].bit_data.u32;
-    uint32_t data = (uint32_t)((0x5FAUL << 16U)    |
-                           (origin & (7UL << 8U)) |
-                            (1UL << 2U)    );;
+    uint32_t data = (uint32_t) ((0x5FAUL << 16U) |
+                                (origin & (7UL << 8U)) |
+                                (1UL << 2U));;
 
     reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::TAR, address));
     reg_request.push_back(DAPReader::APWriteRequest(SW::MEM_AP::DRW, data));
-    if (transfer(reg_request,reg_responses)!=DAP::TRANSFER_OK) {
-        qDebug()<<"transfer failed,write failed.";
+    if (transfer(reg_request, reg_responses) != DAP::TRANSFER_OK) {
+        qDebug() << "transfer failed,write failed.";
         return false;
     }
-    qDebug()<<"resetTarget";
+    qDebug() << "resetTarget";
 
     return true;
 }
-

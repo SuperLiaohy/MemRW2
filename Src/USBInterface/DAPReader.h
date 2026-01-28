@@ -148,6 +148,7 @@ private:
     void generateMapRequests();
     int transferFromMapRequests();
 
+    std::vector<std::shared_ptr<USBDevDesc>> devs;
     static SerialDebugInterface sw;
     std::unique_ptr<USBBulk> usb;
     std::vector<uint8_t> response_buffer;

@@ -11,7 +11,7 @@
 
 class USBBulk {
 public:
-    USBDevDesc desc;
+    DapLinkDesc desc;
 
     static int init() {
         if (ctx == nullptr) return libusb_init(&ctx);
@@ -27,13 +27,13 @@ public:
         }
     }
 
-    explicit USBBulk(const USBDevDesc &desc) : desc(desc) {
+    explicit USBBulk(const DapLinkDesc &desc) : desc(desc) {
         dev = libusb_open_device_with_vid_pid(Context(), desc.vendor_id, desc.product_id);
         if (!dev) throw std::runtime_error("Could not open usb bulk.");
         if (libusb_claim_interface(dev, desc.interface_num)!=0) throw std::runtime_error("Could not claim Bulk interface.");
     }
 
-    explicit USBBulk(const std::shared_ptr<USBDevDesc> &Pdesc) : desc(*Pdesc) {
+    explicit USBBulk(const std::shared_ptr<DapLinkDesc> &Pdesc) : desc(*Pdesc) {
         dev = libusb_open_device_with_vid_pid(Context(), desc.vendor_id, desc.product_id);
         if (!dev) throw std::runtime_error("Could not open usb bulk.");
         if (libusb_claim_interface(dev, desc.interface_num)!=0) throw std::runtime_error("Could not claim Bulk interface.");
